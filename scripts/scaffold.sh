@@ -12,6 +12,7 @@ SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 TEMPLATE_DIR="$SKILL_DIR/templates"
 
 mkdir -p "$TARGET/assets/jimeng" "$TARGET/assets/html" "$TARGET/assets/recordings" "$TARGET/assets/original" "$TARGET/assets/audio" "$TARGET/subtitles"
+mkdir -p "$TARGET/materials/MP4" "$TARGET/materials/MP3" "$TARGET/materials/video_output" "$TARGET/materials/output"
 
 [ -f "$TARGET/article.md" ] || touch "$TARGET/article.md"
 for f in video-plan.md narration.md shot-list.md asset-manifest.md edit-guide.md; do

@@ -8,7 +8,8 @@
 - 逐镜头 AI 视频 Prompt 与即梦 CLI 生成任务
 - 原图转 HTML 动态图解与 HTML 图解录屏
 - 配音音频生成 / 接入
-- SRT 字幕生成 / 校准
+- 从音频或视频生成 SRT 字幕、字幕校准与烧录
+- 视频剪辑脚本：音频拼接、音视频变速对齐、分段合成、BGM 混音
 - 资产清单与剪辑交付说明
 
 ## 设计原则
@@ -38,10 +39,15 @@ jimeng-video-generation/
 │   ├── HTML-RECORDING.md
 │   ├── AUDIO.md
 │   ├── SUBTITLES.md
+│   ├── EDITING.md
 │   ├── DELIVERY.md
 │   └── TEST-PROMPTS.md
 ├── scripts/
-│   └── scaffold.sh
+│   ├── scaffold.sh
+│   ├── merge_audio.py
+│   ├── match_video_speed_to_audio.py
+│   ├── merge_video_audio_segments.py
+│   └── add_bgm_to_video.py
 └── templates/
     ├── video-plan.md
     ├── narration.md
@@ -54,7 +60,7 @@ jimeng-video-generation/
 ## 默认工作流
 
 ```text
-素材理解 → Planning → Checkpoint Plan → Assets → Checkpoint Assets → Audio → Checkpoint Audio → Subtitles → Delivery
+素材理解 → Planning → Checkpoint Plan → Assets → Checkpoint Assets → Audio → Checkpoint Audio → Editing → Subtitles → Delivery
 ```
 
 ## 初始化项目
@@ -63,10 +69,25 @@ jimeng-video-generation/
 bash .claude/skills/jimeng-video-generation/scripts/scaffold.sh output/my-video
 ```
 
+## 可选运行依赖
+
+剪辑脚本和字幕流程需要本机工具：
+
+```bash
+ffmpeg -version
+ffprobe -version
+whisper --help
+```
+
+- `ffmpeg` / `ffprobe`：视频合成、音频处理、字幕烧录所需的系统依赖。
+- `openai-whisper`：提供 `whisper` CLI，用于从音频或视频生成 SRT。可通过 `pip install -r requirements.txt` 安装 Python 依赖。
+- 烧录中文字幕时，系统需要可用中文字体；`Microsoft YaHei` 不存在时需替换为本机字体。
+
 ## 关键边界
 
 - 不要默认跑完整链路；按用户意图路由。
 - 规划阶段不生成最终 SRT。
 - SRT 在配音音频生成或用户提供最终音频后再生成 / 校准。
+- 也可用 Whisper 从最终音频或最终视频生成 SRT，并用 ffmpeg 将字幕烧录到视频。
 - 原图处理必须先让用户在两个分支中选择：复用原图 + 统一背景图；将原图按原结构重绘为 HTML 动态图解。
 - AI 视频中禁止生成可读文字、字母、Logo、真实代码、品牌标识；这些由后期添加。
