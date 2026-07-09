@@ -1,6 +1,6 @@
 ---
 name: jimeng-video-generation
-description: 为即梦 / AI 视频生成场景，把技术发布稿、产品文档、Markdown、截图、录屏、架构图、流程图、机制图等素材，规划并生产技术发布解读视频。支持生成视频结构规划、分镜脚本、配音稿、逐镜头 AI 视频 Prompt、即梦 CLI 生成任务、文章原图转 HTML 动态图解、HTML 录屏、配音音频、SRT 字幕校准、资产清单与剪辑交付说明。适用于“生成即梦视频 / 技术发布短视频 / 产品功能解读视频 / AI 视频 Prompt / 图片转 HTML 动态图解 / HTML 录屏 / 配音字幕 / 整理剪辑交付资产”等请求。该 Skill 采用分阶段工作流：先规划，再经用户确认后进入素材生产、音频、字幕和交付整理。
+description: 为即梦 / AI 视频生成场景，把技术发布稿、产品文档、Markdown、截图、录屏、架构图、流程图、机制图等素材，规划并生产技术发布解读视频。支持生成视频结构规划、分镜脚本、配音稿、逐镜头 AI 视频 Prompt、即梦 CLI 生成任务、文章原图转 HTML 动态图解、HTML 录屏、配音音频、音视频生成 SRT 字幕、字幕烧录、视频音频分段合成、变速对齐、BGM 混音、资产清单与剪辑交付说明。适用于“生成即梦视频 / 技术发布短视频 / 产品功能解读视频 / AI 视频 Prompt / 图片转 HTML 动态图解 / HTML 录屏 / 配音字幕 / 视频剪辑脚本 / 整理剪辑交付资产”等请求。该 Skill 采用分阶段工作流：先规划，再经用户确认后进入素材生产、音频、剪辑、字幕和交付整理。
 ---
 
 # Jimeng Video Generation
@@ -10,7 +10,7 @@ description: 为即梦 / AI 视频生成场景，把技术发布稿、产品文�
 它不是一次性无确认地跑完整链路，而是采用：
 
 ```text
-素材理解 → 视频规划 → Checkpoint Plan → 素材生产 → Checkpoint Assets → 配音 → Checkpoint Audio → 字幕 → 交付整理
+素材理解 → 视频规划 → Checkpoint Plan → 素材生产 → Checkpoint Assets → 配音 → Checkpoint Audio → 剪辑合成 → 字幕 → 交付整理
 ```
 
 主文件只负责流程路由和检查点；每个生产模块的详细规则放在 `references/`。
@@ -25,7 +25,8 @@ description: 为即梦 / AI 视频生成场景，把技术发布稿、产品文�
 - 将文章原图、架构图、流程图、机制图转为 HTML 动态图解
 - 对 HTML 动态图解进行浏览器录屏，作为视频素材
 - 生成配音音频，或接入用户自带配音音频
-- 在最终音频和镜头时长确认后生成 / 校准 SRT 字幕
+- 使用脚本完成音频拼接、视频按音频变速、分段音视频合成和 BGM 混音
+- 从最终音频或视频生成 / 校准 SRT 字幕，并可将字幕烧录进视频
 - 整理 `asset-manifest.md` 和 `edit-guide.md`，交付给剪辑
 
 不适用：
@@ -61,7 +62,8 @@ description: 为即梦 / AI 视频生成场景，把技术发布稿、产品文�
 | 要调试 HTML 图解 | `references/HTML-DIAGRAM.md` | 局部修改后的 HTML |
 | 要录屏 HTML | `references/HTML-RECORDING.md` | `assets/recordings/*.mp4` |
 | 要生成配音音频 | `references/AUDIO.md` | `assets/audio/voiceover.mp3`、`audio-info.md` |
-| 要生成 / 校准字幕 | `references/SUBTITLES.md` | `subtitles/subtitles.srt` |
+| 要剪辑合成 / 音视频对齐 / 加 BGM | `references/EDITING.md` | `materials/output/final_video.mp4` 或最终导出视频 |
+| 要从音频或视频生成 / 校准字幕 / 烧录字幕 | `references/SUBTITLES.md` | `subtitles/subtitles.srt` 或带字幕视频 |
 | 要完整端到端视频 | 本文件完整工作流 + 各模块 reference | 规划、素材、音频、字幕、交付清单 |
 | 要优化 Skill 本身 | 先给修改计划，再修改 Skill | Skill 修改计划 / 文档更新 |
 
@@ -97,12 +99,15 @@ Phase 3  Audio
   基于 narration.md 生成或接入配音音频
 
 [Checkpoint Audio]
-  确认音频可用，是否进入字幕生成 / 校准
+  确认音频可用，是否进入剪辑合成
 
-Phase 4  Subtitles
-  基于最终音频和镜头时长生成 / 校准 subtitles.srt
+Phase 4  Editing
+  根据素材和音频执行变速对齐、分段合成、字幕烧录、BGM 混音等剪辑脚本
 
-Phase 5  Delivery
+Phase 5  Subtitles
+  基于最终音频或最终视频生成 / 校准 subtitles.srt，可选烧录字幕
+
+Phase 6  Delivery
   整理 asset-manifest.md + edit-guide.md
 ```
 
@@ -117,9 +122,12 @@ Phase 5  Delivery
 | HTML Diagram | `references/HTML-DIAGRAM.md` | 原图按结构重绘为 HTML 动态图解，以及反馈调试 |
 | HTML Recording | `references/HTML-RECORDING.md` | 浏览器录屏 HTML 图解 |
 | Audio | `references/AUDIO.md` | 配音音频生成 / 用户音频接入 |
-| Subtitles | `references/SUBTITLES.md` | 最终音频后的 SRT 生成 / 校准 |
+| Editing | `references/EDITING.md` | 视频剪辑脚本：音频拼接、变速对齐、分段合成、BGM 混音 |
+| Subtitles | `references/SUBTITLES.md` | 从音频 / 视频生成 SRT、校准字幕、烧录字幕 |
 | Delivery | `references/DELIVERY.md` | 资产清单、剪辑说明、交付检查 |
 | Test | `references/TEST-PROMPTS.md` | 用轻量测试提示词验证路由和行为 |
+
+运行脚本或字幕命令前，先按对应 reference 的“前置依赖”检查 `ffmpeg`、`ffprobe`、`whisper` 和中文字体。
 
 ---
 ## Phase 1：Planning
@@ -209,13 +217,28 @@ audio-info.md
 
 ---
 
-## Phase 4：Subtitles
+## Phase 4：Editing
 
-读取 `references/SUBTITLES.md`。SRT 只在最终音频生成或用户提供最终音频后生成 / 校准。输出 `subtitles/subtitles.srt`。
+读取 `references/EDITING.md`。按用户目标选择现有脚本：
+
+- `scripts/merge_audio.py`：拼接 `materials/audio*.mp3` 为 `merge.mp3`
+- `scripts/match_video_speed_to_audio.py`：将 `videoN` 变速匹配 `audioN`
+- `scripts/merge_video_audio_segments.py`：将编号视频和音频合成片段后拼接为 `final_video.mp4`
+- `scripts/add_bgm_to_video.py`：给最终视频混入 BGM
+
+执行前必须确认脚本顶部配置区中的输入 / 输出目录符合当前项目；必要时先修改配置或提示用户目录约定。
 
 ---
 
-## Phase 5：Delivery
+## Phase 5：Subtitles
+
+读取 `references/SUBTITLES.md`。SRT 只在最终音频、用户提供最终音频或最终视频存在后生成 / 校准。输出 `subtitles/subtitles.srt`。
+
+如用户提供最终视频或要求从视频中生成字幕，可直接用视频作为 Whisper 输入；如用户要求“添加字幕 / 烧字幕”，按 `references/SUBTITLES.md` 使用 ffmpeg `subtitles` filter 输出带字幕视频。
+
+---
+
+## Phase 6：Delivery
 
 读取 `references/DELIVERY.md`。默认产出：
 
@@ -246,8 +269,13 @@ output/<project-name>/
 │   ├── recordings/
 │   ├── original/
 │   └── audio/
-└── subtitles/
-    └── subtitles.srt
+├── subtitles/
+│   └── subtitles.srt
+└── materials/
+    ├── MP4/
+    ├── MP3/
+    ├── video_output/
+    └── output/
 ```
 
 可使用：
