@@ -2,12 +2,12 @@
 
 ## 何时读取
 
-当配音音频已生成、用户提供最终音频或最终视频，并确认需要生成 / 校准 SRT 字幕、从音频 / 视频转字幕，或将字幕烧录进视频时读取。
+当用户提供最终音频或最终视频，并确认需要生成 / 校准 SRT 字幕、从音频 / 视频转字幕，或将字幕烧录进视频时读取。
 
 ## 输入
 
 - `narration.md`
-- `assets/audio/voiceover.mp3`、`merge.mp3`、用户提供的最终音频，或最终视频文件
+- `merge.mp3`、用户提供的最终音频，或最终视频文件
 - 最终镜头时长、剪辑时间线或 `shot-list.md`
 
 ## 前置依赖
@@ -75,6 +75,12 @@ whisper materials/output/final_video.mp4 --language Chinese --task transcribe --
 ffmpeg -y -i materials/output/final_video.mp4 -vf "subtitles=merge.srt:force_style='FontName=Microsoft YaHei,FontSize=15,Outline=0,Shadow=0,Alignment=2,MarginV=30'" -c:a copy final_with_subtitle.mp4
 ```
 
+如果项目成片在 `materials/memory/output/`，使用：
+
+```bash
+ffmpeg -y -i materials/memory/output/final_video.mp4 -vf "subtitles=merge.srt:force_style='FontName=Microsoft YaHei,FontSize=15,Outline=0,Shadow=0,Alignment=2,MarginV=30'" -c:a copy final_with_subtitle.mp4
+```
+
 使用规则：
 
 - `subtitles=...` 指向实际 SRT 路径；路径含空格或特殊字符时优先改成简单英文路径。
@@ -99,7 +105,7 @@ ffmpeg -y -i materials/output/final_video.mp4 -vf "subtitles=merge.srt:force_sty
 
 ## 失败 / 退化路径
 
-- 音频 / 视频不存在：回到 Audio 或 Editing 模块。
+- 音频 / 视频不存在：要求用户提供最终音频 / 视频，或回到 Editing 模块生成最终视频。
 - 无法获取音频时长：请求用户提供时长，或生成草稿 SRT 并明确标记。
 - 文稿和音频不一致：要求用户确认以音频还是文稿为准。
 - Whisper 不可用：提示安装或要求用户提供 SRT。
