@@ -2,7 +2,7 @@
   "name": "jimeng-video-generation",
   "version": "2.0.0",
   "category": "AI Video / Jimeng / Technical Release Production",
-  "description": "End-to-end lightweight orchestration skill for Jimeng / AI technical explainer video production: planning, storyboard, narration, AI video prompts, Jimeng CLI tasks, HTML dynamic diagrams, HTML recording, audio, editing scripts, SRT subtitles, subtitle burn-in, asset manifest, and edit guide.",
+  "description": "End-to-end lightweight orchestration skill for Jimeng / AI technical explainer video production: planning, storyboard, narration, AI video prompts, Jimeng CLI tasks, HTML dynamic diagrams, HTML recording, user-provided audio, editing scripts, SRT subtitles, subtitle burn-in, asset manifest, and edit guide.",
   "homepage": "",
   "compat": ["claude-code", "claude-ai"],
   "entrypoint": "SKILL.md",

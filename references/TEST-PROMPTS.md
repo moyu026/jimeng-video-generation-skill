@@ -10,7 +10,7 @@ Prompt：请基于 inputs/xxx 生成即梦视频脚本和配音稿，不要生�
 - 只进入 Planning。
 - 产出 `video-plan.md`、`narration.md`、`shot-list.md`。
 - 不生成 `subtitles.srt`。
-- 不调用即梦 / TTS / 录屏。
+- 不调用即梦 / 录屏，不生成配音音频。
 
 ## 2. 原图处理方式确认
 
@@ -52,12 +52,12 @@ Prompt：请根据 shot-list.md 里的 AI 视频镜头调用即梦 CLI。
 
 ## 6. 音频后字幕
 
-Prompt：请根据已经生成的 voiceover.mp3 生成 SRT。
+Prompt：请根据用户提供的 merge.mp3 生成 SRT。
 
 期望：
 - 读取 `SUBTITLES.md`。
 - 不重新生成视频规划。
-- 根据最终音频和镜头时长生成 `subtitles/subtitles.srt`。
+- 根据用户提供的最终音频和镜头时长生成 `subtitles/subtitles.srt`。
 
 ## 7. 完整端到端
 

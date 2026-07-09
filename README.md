@@ -7,7 +7,7 @@
 - 视频结构规划、分镜脚本与配音稿
 - 逐镜头 AI 视频 Prompt 与即梦 CLI 生成任务
 - 原图转 HTML 动态图解与 HTML 图解录屏
-- 配音音频生成 / 接入
+- 用户提供音频接入
 - 从音频或视频生成 SRT 字幕、字幕校准与烧录
 - 视频剪辑脚本：音频拼接、音视频变速对齐、分段合成、BGM 混音
 - 资产清单与剪辑交付说明
@@ -37,7 +37,6 @@ jimeng-video-generation/
 │   ├── JIMENG-CLI.md
 │   ├── HTML-DIAGRAM.md
 │   ├── HTML-RECORDING.md
-│   ├── AUDIO.md
 │   ├── SUBTITLES.md
 │   ├── EDITING.md
 │   ├── DELIVERY.md
@@ -60,7 +59,7 @@ jimeng-video-generation/
 ## 默认工作流
 
 ```text
-素材理解 → Planning → Checkpoint Plan → Assets → Checkpoint Assets → Audio → Checkpoint Audio → Editing → Subtitles → Delivery
+素材理解 → Planning → Checkpoint Plan → Assets → Checkpoint Assets → User Audio → Checkpoint User Audio → Editing → Subtitles → Delivery
 ```
 
 ## 初始化项目
@@ -87,7 +86,7 @@ whisper --help
 
 - 不要默认跑完整链路；按用户意图路由。
 - 规划阶段不生成最终 SRT。
-- SRT 在配音音频生成或用户提供最终音频后再生成 / 校准。
+- SRT 在用户提供最终音频或最终视频后再生成 / 校准。
 - 也可用 Whisper 从最终音频或最终视频生成 SRT，并用 ffmpeg 将字幕烧录到视频。
 - 原图处理必须先让用户在两个分支中选择：复用原图 + 统一背景图；将原图按原结构重绘为 HTML 动态图解。
 - AI 视频中禁止生成可读文字、字母、Logo、真实代码、品牌标识；这些由后期添加。
