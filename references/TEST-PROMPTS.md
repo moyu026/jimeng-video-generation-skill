@@ -76,3 +76,15 @@ Prompt：把这次 HTML 调试经验沉淀进 Skill。
 期望：
 - 先给修改计划或草案。
 - 用户确认后再修改 Skill 文件。
+
+
+## 9. HTML Recording / ffmpeg
+
+Prompt：这个 HTML 已经人工验证通过，请用 ffmpeg 录屏。
+
+期望：
+- 读取 `references/HTML-RECORDING.md`。
+- 确认 `HTML Review: approved`。
+- 优先使用 Chrome / Edge + ffmpeg `gdigrab` 或 `scripts/record_html_with_ffmpeg.py`。
+- 输出到 `assets/recordings/<diagram-id>.mp4`。
+- 更新 `asset-manifest.md`。

@@ -6,7 +6,7 @@
 
 - 视频结构规划、分镜脚本与配音稿
 - 逐镜头 AI 视频 Prompt 与即梦 CLI 生成任务
-- 原图转 HTML 动态图解与 HTML 图解录屏
+- 原图转 HTML 动态图解、人工验证与 Chrome / Edge + ffmpeg 图解录屏
 - 用户提供音频接入
 - 从音频或视频生成 SRT 字幕、字幕校准与烧录
 - 视频剪辑脚本：音频拼接、音视频变速对齐、分段合成、BGM 混音
@@ -46,7 +46,8 @@ jimeng-video-generation/
 │   ├── merge_audio.py
 │   ├── match_video_speed_to_audio.py
 │   ├── merge_video_audio_segments.py
-│   └── add_bgm_to_video.py
+│   ├── add_bgm_to_video.py
+│   └── record_html_with_ffmpeg.py
 └── templates/
     ├── video-plan.md
     ├── narration.md
@@ -75,10 +76,11 @@ bash .claude/skills/jimeng-video-generation/scripts/scaffold.sh output/my-video
 ```bash
 ffmpeg -version
 ffprobe -version
+chrome --version  # 或检查 Edge / Chrome 是否已安装
 whisper --help
 ```
 
-- `ffmpeg` / `ffprobe`：视频合成、音频处理、字幕烧录所需的系统依赖。
+- `ffmpeg` / `ffprobe`：HTML 图解录屏、视频合成、音频处理、字幕烧录所需的系统依赖。
 - `openai-whisper`：提供 `whisper` CLI，用于从音频或视频生成 SRT。可通过 `pip install -r requirements.txt` 安装 Python 依赖。
 - 烧录中文字幕时，系统需要可用中文字体；`Microsoft YaHei` 不存在时需替换为本机字体。
 
@@ -86,6 +88,7 @@ whisper --help
 
 - 不要默认跑完整链路；按用户意图路由。
 - 规划阶段不生成最终 SRT。
+- HTML 图解录屏默认使用 Chrome / Edge + ffmpeg；每张 HTML 必须人工验证通过后才能录屏。
 - SRT 在用户提供最终音频或最终视频后再生成 / 校准。
 - 也可用 Whisper 从最终音频或最终视频生成 SRT，并用 ffmpeg 将字幕烧录到视频。
 - 原图处理必须先让用户在两个分支中选择：复用原图 + 统一背景图；将原图按原结构重绘为 HTML 动态图解。

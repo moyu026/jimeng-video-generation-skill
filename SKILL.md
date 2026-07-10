@@ -42,7 +42,7 @@ description: 为即梦 / AI 视频生成场景，把技术发布稿、产品文�
 1. **先规划，再生产**：先生成 `video-plan.md`、`narration.md`、`shot-list.md`，经用户确认后再进入素材生产。
 2. **规划阶段不生成最终 SRT**：SRT 必须在用户提供最终音频或最终视频之后，根据最终音频 / 视频与镜头时长生成 / 校准。
 3. **不要默认跑完整链路**：用户只要求某一项时，只执行对应模块。
-4. **硬 Checkpoint**：进入素材生产、剪辑、字幕前必须确认上游产物。
+4. **硬 Checkpoint**：进入素材生产、剪辑、字幕前必须确认上游产物；每张 HTML 图解生成后必须人工验证通过，才能录屏。
 5. **技术表达专业克制**：关键技术特性、机制说明、性能收益、边界判断应尽量参考原文提取，不要过度口语化或改成泛营销话术。
 6. **时长动态决定**：根据素材复杂度、信息量和复用视频 / 录屏片段动态决定，总时长控制在 150 秒以内；不要为了压时长删掉必要技术解释。
 7. **原图处理只有两个分支**：复用原图 + 生成统一背景图；将原图按原结构重绘为 HTML 动态图解。
@@ -88,7 +88,8 @@ Phase 1  Planning
 Phase 2  Assets
   ├─ AI 视频镜头 → Jimeng CLI
   ├─ 文章原图 / 架构图 → HTML 动态图解
-  ├─ HTML 图解 → 浏览器录屏
+  ├─ Checkpoint HTML Review：人工打开 HTML 验证效果
+  ├─ HTML 图解 → Chrome / Edge + ffmpeg 录屏
   ├─ 原始视频 / 录屏 → 复用或裁剪
   └─ 后期图文包装 → 标题、字幕、箭头、框选
 
@@ -119,14 +120,14 @@ Phase 6  Delivery
 |---|---|---|
 | Planning | `references/PLANNING.md` | 视频结构、配音稿、分镜、AI Prompt、素材来源规划 |
 | Jimeng CLI | `references/JIMENG-CLI.md` | 即梦任务、生成结果、失败回退、manifest 回填 |
-| HTML Diagram | `references/HTML-DIAGRAM.md` | 原图按结构重绘为 HTML 动态图解，以及反馈调试 |
-| HTML Recording | `references/HTML-RECORDING.md` | 浏览器录屏 HTML 图解 |
+| HTML Diagram | `references/HTML-DIAGRAM.md` | 原图按结构重绘为 HTML 动态图解，以及强制人工验证 / 反馈调试 |
+| HTML Recording | `references/HTML-RECORDING.md` | 人工验证通过后，用 Chrome / Edge + ffmpeg 录屏 HTML 图解 |
 | Editing | `references/EDITING.md` | 视频剪辑脚本：音频拼接、变速对齐、分段合成、BGM 混音 |
 | Subtitles | `references/SUBTITLES.md` | 从音频 / 视频生成 SRT、校准字幕、烧录字幕 |
 | Delivery | `references/DELIVERY.md` | 资产清单、剪辑说明、交付检查 |
 | Test | `references/TEST-PROMPTS.md` | 用轻量测试提示词验证路由和行为 |
 
-运行脚本或字幕命令前，先按对应 reference 的“前置依赖”检查 `ffmpeg`、`ffprobe`、`whisper` 和中文字体。
+运行录屏、剪辑或字幕命令前，先按对应 reference 的“前置依赖”检查 `ffmpeg`、`ffprobe`、`whisper`、Chrome / Edge 和中文字体。
 
 ---
 ## Phase 1：Planning
@@ -183,8 +184,8 @@ shot-list.md
 根据 `shot-list.md` 拆分素材生产任务：
 
 - AI 生成视频镜头：读取 `references/JIMENG-CLI.md`
-- 文章原图 / 架构图 / 流程图：读取 `references/HTML-DIAGRAM.md`
-- HTML 图解录屏：读取 `references/HTML-RECORDING.md`
+- 文章原图 / 架构图 / 流程图：读取 `references/HTML-DIAGRAM.md`，生成后必须执行人工验证
+- HTML 图解录屏：仅在对应 HTML 人工验证通过后读取 `references/HTML-RECORDING.md`，默认使用 Chrome / Edge + ffmpeg `gdigrab` 半自动录屏
 - 原始视频 / 录屏：复用、裁剪或写入剪辑说明
 - 后期图文包装：写入 `edit-guide.md`，不交给 AI 视频模型生成可读文字
 
@@ -225,6 +226,7 @@ shot-list.md
 - `scripts/match_video_speed_to_audio.py`：将 `videoN` 变速匹配 `audioN`
 - `scripts/merge_video_audio_segments.py`：将编号视频和音频合成片段后拼接为 `final_video.mp4`
 - `scripts/add_bgm_to_video.py`：给最终视频混入 BGM
+- `scripts/record_html_with_ffmpeg.py`：用 Chrome / Edge + ffmpeg 录制 HTML 图解
 
 执行前必须确认脚本顶部配置区中的输入 / 输出目录符合当前项目；必要时先修改配置或提示用户目录约定。
 
@@ -298,6 +300,6 @@ bash .claude/skills/jimeng-video-generation/scripts/scaffold.sh output/<project-
 - 是否明确区分素材类型？
 - AI 视频 Prompt 是否包含镜头时长、时间轴、运动、结尾状态、风格、禁止内容？
 - 原图处理方式是否经过用户确认？
-- HTML 图解是否保留原图结构和文字信息？
+- HTML 图解是否保留原图结构和文字信息，并已人工验证通过后才录屏？
 - 字幕是否在用户提供最终音频或最终视频后生成 / 校准？
 - `asset-manifest.md` 和 `edit-guide.md` 是否能支持剪辑人员接手？
