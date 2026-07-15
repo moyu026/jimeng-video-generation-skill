@@ -42,10 +42,10 @@ edit-guide.md 更新项（如需要）
 
 1. **提取封面核心对象**：从当前文章中提取产品名 / 技术名 / 项目名，必须在封面标题或标签中突出显示。
 2. **生成封面 Prompt**：结合 `video-plan.md` 的 Cover Image Prompt、用户参考图和本文技术卖点，写清楚构图、风格、标题区、Logo 区、主视觉和禁止内容。
-3. **生成 16:9 主封面**：优先生成 `1920×1080` 或等比例 16:9 图片，输出为 `assets/covers/cover-16x9.png`。
-4. **后期叠加准确文字与 Logo**：标题、产品 / 技术名称、Logo、作者名、平台标签原则上后期叠加，不让图像模型凭空生成可读文字或重画 Logo。
-5. **Checkpoint Cover Review**：16:9 主封面生成后必须停下，请人工检查封面图和 Prompt。没有人工确认前，不继续生成其它尺寸。
-6. **按反馈调整**：如果人工检查不通过，先调整 Prompt 或后期排版，重新生成 / 修图，再次进入 Cover Review。
+3. **生成 16:9 无字主视觉背景**：优先生成 `1920×1080` 或等比例 16:9 图片，输出为 `assets/covers/cover-bg-16x9.png`。AI / 图像模型只负责无字主视觉，不生成标题、Logo 或产品名。
+4. **后期叠加准确文字与 Logo**：使用 `scripts/create_cover_with_text.py` 将标题、产品 / 技术名称、Logo、作者名、平台标签准确叠加，输出 `assets/covers/cover-16x9.png`。
+5. **Checkpoint Cover Review**：16:9 带字主封面生成后必须停下，请人工检查封面图、Prompt 和后期嵌字效果。没有人工确认前，不继续生成其它尺寸。
+6. **按反馈调整**：如果人工检查不通过，先判断问题来源：主视觉问题调整 Prompt / 背景图；文字、Logo、标题层级问题调整 `create_cover_with_text.py` 参数或后期排版；修复后再次进入 Cover Review。
 7. **生成视频号尺寸封面**：只有 `Cover Review: approved` 后，才能基于当前确认的 16:9 主封面生成：
    - `1080×608` 横版视频号封面。
    - `1080×1260` 竖版视频号封面。
@@ -126,18 +126,65 @@ Logo 与可读标题后期叠加
 2. 最强卖点。
 3. 社区 / 项目品牌。
 
+
+## 后期嵌字脚本
+
+封面中的可读文字和 Logo 必须由后期脚本准确叠加。推荐脚本：
+
+```bash
+python scripts/create_cover_with_text.py \n  --background assets/covers/cover-bg-16x9.png \n  --logo assets/original/openJiuwen-logo.png \n  --brand openJiuwen \n  --badge "AUTO-GENETIC MEMORY" \n  --title-line1 "跨会话不再失忆" \n  --title-line2 "记忆自主生长" \n  --subtitle "AutoGenetic Memory 让 Agent 越用越懂你" \n  --footer "JiuwenMemory · Agent Memory Engine" \n  --theme dark \n  --out-dir assets/covers
+```
+
+脚本输出：
+
+```text
+assets/covers/cover-16x9.png
+assets/covers/cover-video-account-1080x608.png
+assets/covers/cover-video-account-1080x1260.png
+```
+
+脚本设计参考了历史 `create_cover_v3.py` 的稳定做法：
+
+- 使用 Pillow 本地绘制文字，保证中文、英文技术名和 Logo 准确。
+- 左侧 / 稳定区域作为品牌、标签和标题区。
+- 右侧 / 主区域保留主视觉，不让标题区被粒子、卡片或节点侵入。
+- 使用官方 Logo 图片合成，不让模型重画。
+- 同一份背景和文案导出多尺寸，保证 16:9、1080×608、1080×1260 文案一致。
+
+推荐先只生成或检查 16:9 主封面：
+
+```bash
+python scripts/create_cover_with_text.py \n  --background assets/covers/cover-bg-16x9.png \n  --title-line1 "主标题" \n  --subtitle "产品 / 技术名称 + 一句话定义" \n  --only 16x9
+```
+
+人工确认 `Cover Review: approved` 后，再生成全部尺寸：
+
+```bash
+python scripts/create_cover_with_text.py \n  --background assets/covers/cover-bg-16x9.png \n  --title-line1 "主标题" \n  --subtitle "产品 / 技术名称 + 一句话定义"
+```
+
+如果竖版裁切不理想，可以调节：
+
+```text
+--focus-x / --focus-y
+--portrait-focus-x / --portrait-focus-y
+```
+
+依赖：脚本需要 Python 包 `Pillow`。
+
 ## Checkpoint Cover Review
 
 16:9 主封面生成后必须停下，输出类似确认语：
 
 ```text
 16:9 主封面已生成：assets/covers/cover-16x9.png
+无字背景：assets/covers/cover-bg-16x9.png
 当前状态：cover-needs-human-review
 
 请人工检查：
 1. 是否突出当前文章的产品或技术名称？
 2. 主标题 / 副标题 / 标签是否准确，是否需要改文案？
-3. Logo 是否准确、清晰、未变形？
+3. Logo 是否准确、清晰、未变形？是否为后期叠加的官方 / 授权文件？
 4. 参考风格是否到位，但没有复刻参考图具体内容？
 5. 标题区是否清晰，缩略图下是否可读？
 6. 主视觉是否表达当前技术卖点，而不是泛科技背景？
@@ -176,6 +223,7 @@ assets/covers/cover-video-account-1080x1260.png
 生成原则：
 
 - 以已确认的 16:9 主封面为视觉基准，不重新发散设计。
+- 优先使用 `scripts/create_cover_with_text.py` 从同一张无字背景和同一组文案导出变体。
 - 保持产品 / 技术名称、Logo、主标题准确一致。
 - 不允许变体图重新生成错误文字或篡改 Logo。
 - 如果需要重新排版文字，必须使用后期文字图层，不让图像模型直接生成文字。
@@ -198,10 +246,11 @@ assets/covers/cover-video-account-1080x1260.png
 ## 完成标准
 
 - `video-plan.md` 中已有可执行封面 Prompt。
+- 已生成 16:9 无字主视觉背景，并用脚本叠加准确文字 / Logo。
 - 已生成 16:9 主封面。
 - 16:9 主封面已人工检查，并记录 `Cover Review: approved`。
 - 封面突出当前文章产品或技术名称。
-- Logo 与可读文字由后期准确叠加，不由模型凭空生成。
+- Logo 与可读文字由后期准确叠加，不由模型凭空生成；推荐使用 `scripts/create_cover_with_text.py`。
 - 参考图只参考风格和构图，不复刻具体元素。
 - 已基于通过审核的 16:9 主封面生成 `1080×608` 和 `1080×1260` 两张视频号封面。
 - 三张封面都写入 `asset-manifest.md`。
@@ -211,7 +260,7 @@ assets/covers/cover-video-account-1080x1260.png
 - 16:9 主封面未人工确认：停止生成视频号变体，回到 Cover Review。
 - 技术名 / 产品名不突出：优先调整标题层级和后期排版。
 - Logo 不准确或变形：改为后期叠加官方 Logo，不让模型生成。
-- 标题区不可读：调整留白、字号、对比度或主视觉位置。
+- 标题区不可读：调整留白、字号、对比度、主视觉位置或 `create_cover_with_text.py` 参数。
 - 视频号变体裁切关键信息：基于 16:9 主封面重新裁切 / 扩边 / 重排版，不重新生成发散设计。
 - 参考图复刻过重：重新生成 Prompt，只保留风格方向。
 
@@ -221,7 +270,7 @@ assets/covers/cover-video-account-1080x1260.png
 - [ ] 是否先生成 16:9 主封面？
 - [ ] 16:9 主封面是否已人工检查并记录 `Cover Review: approved`？
 - [ ] 是否在审核通过前停止生成视频号尺寸封面？
-- [ ] 标题、Logo、产品 / 技术名是否由后期准确叠加？
+- [ ] 标题、Logo、产品 / 技术名是否由后期准确叠加？是否使用脚本或同等可控方式？
 - [ ] 是否没有复制参考图的具体文字、Logo、品牌或版权元素？
 - [ ] 是否基于已确认的 16:9 图生成 `1080×608` 与 `1080×1260`？
 - [ ] 三张封面是否都写入 `asset-manifest.md`？

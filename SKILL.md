@@ -234,6 +234,7 @@ shot-list.md
 - `scripts/add_bgm_to_video.py`：给最终视频混入 BGM
 - `scripts/record_html_with_ffmpeg.py`：用 Chrome / Edge + ffmpeg 录制 HTML 图解
 - `scripts/check_narration_consistency.py`：校验配音总稿、分镜映射与 `shot-list.md` 配音文案一致性
+- `scripts/create_cover_with_text.py`：为无字封面背景叠加准确标题、产品 / 技术名称和 Logo，并导出多尺寸封面
 
 执行前必须确认脚本顶部配置区中的输入 / 输出目录符合当前项目；必要时先修改配置或提示用户目录约定。
 

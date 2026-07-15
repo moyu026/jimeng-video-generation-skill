@@ -1,3 +1,6 @@
 # Optional dependency for the `whisper` CLI used by references/SUBTITLES.md.
 # FFmpeg/ffprobe are system dependencies and must be installed separately.
 openai-whisper
+
+# Optional dependency for scripts/create_cover_with_text.py.
+Pillow
