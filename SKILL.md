@@ -149,6 +149,7 @@ shot-list.md
 - Hook / What / How / Future 四段式叙事
 - 每个镜头的素材类型：AI 视频、原图复用 + 统一背景图、原图转 HTML 动态图解并录屏、原始视频复用、后期包装
 - AI 视频镜头的逐 1–2 秒镜头内时间轴 Prompt；即梦镜头默认优先 4–8 秒，复杂内容优先拆成多个短镜头
+- 唯一配音文本：`配音总稿` 按 Shot ID 原样切分到 `narration.md` 分镜映射，并同步到 `shot-list.md` 配音文案；拼接后必须与总稿逐字一致
 - 视频封面图 Prompt，封面文字、Logo、作者名、平台标签由后期添加
 
 规划阶段禁止生成最终 SRT，禁止未经用户确认直接调用即梦 / 录屏工具，禁止生成配音音频，禁止替用户擅自决定原图处理方式。
@@ -227,6 +228,7 @@ shot-list.md
 - `scripts/merge_video_audio_segments.py`：将编号视频和音频合成片段后拼接为 `final_video.mp4`
 - `scripts/add_bgm_to_video.py`：给最终视频混入 BGM
 - `scripts/record_html_with_ffmpeg.py`：用 Chrome / Edge + ffmpeg 录制 HTML 图解
+- `scripts/check_narration_consistency.py`：校验配音总稿、分镜映射与 `shot-list.md` 配音文案一致性
 
 执行前必须确认脚本顶部配置区中的输入 / 输出目录符合当前项目；必要时先修改配置或提示用户目录约定。
 

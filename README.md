@@ -14,7 +14,7 @@
 
 ## 设计原则
 
-参考 `web-video-presentation` 的轻量模块化模式：
+采取轻量模块化设计模式：
 
 ```text
 SKILL.md        # 主流程 / 路由 / Checkpoint
@@ -47,7 +47,8 @@ jimeng-video-generation/
 │   ├── match_video_speed_to_audio.py
 │   ├── merge_video_audio_segments.py
 │   ├── add_bgm_to_video.py
-│   └── record_html_with_ffmpeg.py
+│   ├── record_html_with_ffmpeg.py
+│   └── check_narration_consistency.py
 └── templates/
     ├── video-plan.md
     ├── narration.md
