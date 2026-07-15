@@ -7,6 +7,7 @@
 - 视频结构规划、分镜脚本与配音稿
 - 逐镜头 AI 视频 Prompt 与即梦 CLI 生成任务
 - 原图转 HTML 动态图解、人工验证与 Chrome / Edge + ffmpeg 图解录屏
+- 16:9 主封面、人工检查与视频号封面尺寸变体
 - 用户提供音频接入
 - 从音频或视频生成 SRT 字幕、字幕校准与烧录
 - 视频剪辑脚本：音频拼接、音视频变速对齐、分段合成、BGM 混音
@@ -37,6 +38,7 @@ jimeng-video-generation/
 │   ├── JIMENG-CLI.md
 │   ├── HTML-DIAGRAM.md
 │   ├── HTML-RECORDING.md
+│   ├── COVER.md
 │   ├── SUBTITLES.md
 │   ├── EDITING.md
 │   ├── DELIVERY.md
@@ -90,6 +92,7 @@ whisper --help
 - 不要默认跑完整链路；按用户意图路由。
 - 规划阶段不生成最终 SRT。
 - HTML 图解录屏默认使用 Chrome / Edge + ffmpeg；每张 HTML 必须人工验证通过后才能录屏。
+- 封面默认先生成 16:9 主封面，人工检查通过后再基于该图生成 1080×608 与 1080×1260 视频号封面。
 - SRT 在用户提供最终音频或最终视频后再生成 / 校准。
 - 也可用 Whisper 从最终音频或最终视频生成 SRT，并用 ffmpeg 将字幕烧录到视频。
 - 原图处理必须先让用户在两个分支中选择：复用原图 + 统一背景图；将原图按原结构重绘为 HTML 动态图解。

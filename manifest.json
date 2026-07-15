@@ -2,10 +2,10 @@
   "name": "jimeng-video-generation",
   "version": "2.0.0",
   "category": "AI Video / Jimeng / Technical Release Production",
-  "description": "End-to-end lightweight orchestration skill for Jimeng / AI technical explainer video production: planning, storyboard, narration, AI video prompts, Jimeng CLI tasks, original image to HTML dynamic diagrams, mandatory human HTML review, Chrome/Edge + ffmpeg HTML recording, user-provided audio, editing scripts, SRT subtitles, subtitle burn-in, asset manifest, and edit guide.",
+  "description": "End-to-end lightweight orchestration skill for Jimeng / AI technical explainer video production: planning, storyboard, narration, AI video prompts, Jimeng CLI tasks, original image to HTML dynamic diagrams, mandatory human HTML review, Chrome/Edge + ffmpeg HTML recording, 16:9 main cover with mandatory human review, video-account cover variants, user-provided audio, editing scripts, SRT subtitles, subtitle burn-in, asset manifest, and edit guide.",
   "homepage": "",
   "compat": ["claude-code", "claude-ai"],
   "entrypoint": "SKILL.md",
   "language": "zh-CN",
-  "outputs": ["video-plan.md", "narration.md", "shot-list.md", "asset-manifest.md", "edit-guide.md", "materials/output/final_video.mp4", "subtitles/subtitles.srt", "final_with_subtitle.mp4", "final_with_bgm.mp4"]
+  "outputs": ["video-plan.md", "narration.md", "shot-list.md", "asset-manifest.md", "edit-guide.md", "assets/covers/cover-16x9.png", "assets/covers/cover-video-account-1080x608.png", "assets/covers/cover-video-account-1080x1260.png", "materials/output/final_video.mp4", "subtitles/subtitles.srt", "final_with_subtitle.mp4", "final_with_bgm.mp4"]
 }

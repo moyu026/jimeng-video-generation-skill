@@ -11,7 +11,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 TEMPLATE_DIR="$SKILL_DIR/templates"
 
-mkdir -p "$TARGET/assets/jimeng" "$TARGET/assets/html" "$TARGET/assets/recordings" "$TARGET/assets/original" "$TARGET/subtitles"
+mkdir -p "$TARGET/assets/jimeng" "$TARGET/assets/html" "$TARGET/assets/recordings" "$TARGET/assets/covers" "$TARGET/assets/original" "$TARGET/subtitles"
 mkdir -p "$TARGET/materials/MP4" "$TARGET/materials/MP3" "$TARGET/materials/video_output" "$TARGET/materials/output"
 
 [ -f "$TARGET/article.md" ] || touch "$TARGET/article.md"

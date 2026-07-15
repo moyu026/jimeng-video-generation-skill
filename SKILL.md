@@ -1,6 +1,6 @@
 ---
 name: jimeng-video-generation
-description: 为即梦 / AI 视频生成场景，把技术发布稿、产品文档、Markdown、截图、录屏、架构图、流程图、机制图等素材，规划并生产技术发布解读视频。支持生成视频结构规划、分镜脚本、配音稿、逐镜头 AI 视频 Prompt、即梦 CLI 生成任务、文章原图转 HTML 动态图解、HTML 录屏、用户提供音频接入、音视频生成 SRT 字幕、字幕烧录、视频音频分段合成、变速对齐、BGM 混音、资产清单与剪辑交付说明。适用于“生成即梦视频 / 技术发布短视频 / 产品功能解读视频 / AI 视频 Prompt / 图片转 HTML 动态图解 / HTML 录屏 / 配音字幕 / 视频剪辑脚本 / 整理剪辑交付资产”等请求。该 Skill 采用分阶段工作流：先规划，再经用户确认后进入素材生产、用户音频确认、剪辑、字幕和交付整理。
+description: 为即梦 / AI 视频生成场景，把技术发布稿、产品文档、Markdown、截图、录屏、架构图、流程图、机制图等素材，规划并生产技术发布解读视频。支持生成视频结构规划、分镜脚本、配音稿、逐镜头 AI 视频 Prompt、即梦 CLI 生成任务、文章原图转 HTML 动态图解、HTML 录屏、16:9 主封面与视频号封面、用户提供音频接入、音视频生成 SRT 字幕、字幕烧录、视频音频分段合成、变速对齐、BGM 混音、资产清单与剪辑交付说明。适用于“生成即梦视频 / 技术发布短视频 / 产品功能解读视频 / AI 视频 Prompt / 图片转 HTML 动态图解 / HTML 录屏 / 配音字幕 / 视频剪辑脚本 / 整理剪辑交付资产”等请求。该 Skill 采用分阶段工作流：先规划，再经用户确认后进入素材生产、用户音频确认、剪辑、字幕和交付整理。
 ---
 
 # Jimeng Video Generation
@@ -24,6 +24,7 @@ description: 为即梦 / AI 视频生成场景，把技术发布稿、产品文�
 - 调用即梦 CLI 或生成即梦 CLI 任务说明来生产 AI 视频镜头
 - 将文章原图、架构图、流程图、机制图转为 HTML 动态图解
 - 对 HTML 动态图解进行浏览器录屏，作为视频素材
+- 生成 16:9 主封面，经人工检查后生成 1080×608 与 1080×1260 视频号封面
 - 接入用户提供的配音 / 音频文件，并登记路径和时长
 - 使用脚本完成音频拼接、视频按音频变速、分段音视频合成和 BGM 混音
 - 从最终音频或视频生成 / 校准 SRT 字幕，并可将字幕烧录进视频
@@ -42,7 +43,7 @@ description: 为即梦 / AI 视频生成场景，把技术发布稿、产品文�
 1. **先规划，再生产**：先生成 `video-plan.md`、`narration.md`、`shot-list.md`，经用户确认后再进入素材生产。
 2. **规划阶段不生成最终 SRT**：SRT 必须在用户提供最终音频或最终视频之后，根据最终音频 / 视频与镜头时长生成 / 校准。
 3. **不要默认跑完整链路**：用户只要求某一项时，只执行对应模块。
-4. **硬 Checkpoint**：进入素材生产、剪辑、字幕前必须确认上游产物；每张 HTML 图解生成后必须人工验证通过，才能录屏。
+4. **硬 Checkpoint**：进入素材生产、剪辑、字幕前必须确认上游产物；每张 HTML 图解生成后必须人工验证通过，才能录屏；16:9 主封面必须人工检查通过，才能生成视频号尺寸封面。
 5. **技术表达专业克制**：关键技术特性、机制说明、性能收益、边界判断应尽量参考原文提取，不要过度口语化或改成泛营销话术。
 6. **时长动态决定**：根据素材复杂度、信息量和复用视频 / 录屏片段动态决定，总时长控制在 150 秒以内；不要为了压时长删掉必要技术解释。
 7. **原图处理只有两个分支**：复用原图 + 生成统一背景图；将原图按原结构重绘为 HTML 动态图解。
@@ -61,6 +62,7 @@ description: 为即梦 / AI 视频生成场景，把技术发布稿、产品文�
 | 要把原图转 HTML | `references/HTML-DIAGRAM.md` | `assets/html/*.html` |
 | 要调试 HTML 图解 | `references/HTML-DIAGRAM.md` | 局部修改后的 HTML |
 | 要录屏 HTML | `references/HTML-RECORDING.md` | `assets/recordings/*.mp4` |
+| 要生成封面 / 视频号封面 | `references/COVER.md` | `assets/covers/*.png`、更新 `asset-manifest.md` |
 | 要接入用户提供音频 | 本文件 Phase 3 | 确认音频路径、时长和编号对应关系 |
 | 要剪辑合成 / 音视频对齐 / 加 BGM | `references/EDITING.md` | `materials/output/final_video.mp4` 或最终导出视频 |
 | 要从音频或视频生成 / 校准字幕 / 烧录字幕 | `references/SUBTITLES.md` | `subtitles/subtitles.srt` 或带字幕视频 |
@@ -90,6 +92,7 @@ Phase 2  Assets
   ├─ 文章原图 / 架构图 → HTML 动态图解
   ├─ Checkpoint HTML Review：人工打开 HTML 验证效果
   ├─ HTML 图解 → Chrome / Edge + ffmpeg 录屏
+  ├─ 封面 → 16:9 主封面 → Checkpoint Cover Review → 视频号封面
   ├─ 原始视频 / 录屏 → 复用或裁剪
   └─ 后期图文包装 → 标题、字幕、箭头、框选
 
@@ -122,6 +125,7 @@ Phase 6  Delivery
 | Jimeng CLI | `references/JIMENG-CLI.md` | 即梦任务、生成结果、失败回退、manifest 回填 |
 | HTML Diagram | `references/HTML-DIAGRAM.md` | 原图按结构重绘为 HTML 动态图解，以及强制人工验证 / 反馈调试 |
 | HTML Recording | `references/HTML-RECORDING.md` | 人工验证通过后，用 Chrome / Edge + ffmpeg 录屏 HTML 图解 |
+| Cover | `references/COVER.md` | 16:9 主封面、强制人工检查、视频号尺寸封面 |
 | Editing | `references/EDITING.md` | 视频剪辑脚本：音频拼接、变速对齐、分段合成、BGM 混音 |
 | Subtitles | `references/SUBTITLES.md` | 从音频 / 视频生成 SRT、校准字幕、烧录字幕 |
 | Delivery | `references/DELIVERY.md` | 资产清单、剪辑说明、交付检查 |
@@ -150,7 +154,7 @@ shot-list.md
 - 每个镜头的素材类型：AI 视频、原图复用 + 统一背景图、原图转 HTML 动态图解并录屏、原始视频复用、后期包装
 - AI 视频镜头的逐 1–2 秒镜头内时间轴 Prompt；即梦镜头默认优先 4–8 秒，复杂内容优先拆成多个短镜头
 - 唯一配音文本：`配音总稿` 按 Shot ID 原样切分到 `narration.md` 分镜映射，并同步到 `shot-list.md` 配音文案；拼接后必须与总稿逐字一致
-- 视频封面图 Prompt，封面文字、Logo、作者名、平台标签由后期添加
+- 视频封面图 Prompt，必须突出当前文章产品 / 技术名称；封面文字、Logo、作者名、平台标签由后期添加
 
 规划阶段禁止生成最终 SRT，禁止未经用户确认直接调用即梦 / 录屏工具，禁止生成配音音频，禁止替用户擅自决定原图处理方式。
 
@@ -187,6 +191,7 @@ shot-list.md
 - AI 生成视频镜头：读取 `references/JIMENG-CLI.md`
 - 文章原图 / 架构图 / 流程图：读取 `references/HTML-DIAGRAM.md`，生成后必须执行人工验证
 - HTML 图解录屏：仅在对应 HTML 人工验证通过后读取 `references/HTML-RECORDING.md`，默认使用 Chrome / Edge + ffmpeg `gdigrab` 半自动录屏
+- 封面图：读取 `references/COVER.md`，先生成 16:9 主封面并人工检查，通过后再生成 1080×608 与 1080×1260 视频号封面
 - 原始视频 / 录屏：复用、裁剪或写入剪辑说明
 - 后期图文包装：写入 `edit-guide.md`，不交给 AI 视频模型生成可读文字
 
@@ -196,7 +201,7 @@ shot-list.md
 
 ## Checkpoint Assets
 
-素材生产阶段完成后必须停下，确认：即梦视频、HTML 图解、HTML 录屏、原始素材复用、`asset-manifest.md` 是否就位，以及用户音频是否已提供。用户未确认前，不进入 Phase 3。
+素材生产阶段完成后必须停下，确认：即梦视频、HTML 图解、HTML 录屏、封面图、原始素材复用、`asset-manifest.md` 是否就位，以及用户音频是否已提供。用户未确认前，不进入 Phase 3。
 
 ---
 
@@ -271,6 +276,7 @@ output/<project-name>/
 │   ├── jimeng/
 │   ├── html/
 │   ├── recordings/
+│   ├── covers/
 │   └── original/
 ├── subtitles/
 │   └── subtitles.srt
@@ -303,5 +309,6 @@ bash .claude/skills/jimeng-video-generation/scripts/scaffold.sh output/<project-
 - AI 视频 Prompt 是否包含镜头时长、时间轴、运动、结尾状态、风格、禁止内容？
 - 原图处理方式是否经过用户确认？
 - HTML 图解是否保留原图结构和文字信息，并已人工验证通过后才录屏？
+- 封面是否先生成 16:9 主图并人工检查通过，再生成视频号尺寸？是否突出当前文章产品 / 技术名称？
 - 字幕是否在用户提供最终音频或最终视频后生成 / 校准？
 - `asset-manifest.md` 和 `edit-guide.md` 是否能支持剪辑人员接手？

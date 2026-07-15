@@ -68,6 +68,16 @@ Logo 使用：<是否需要露出自有 / 授权开源社区 Logo；建议写明
 
 > 如果提供参考示例图，只参考设计方向，不复刻参考图中的具体内容、文字、Logo、品牌或人物。
 
+## 封面图生产清单
+
+> 封面不计入视频时间线。必须先生成 16:9 主封面并人工检查，通过后才能生成视频号尺寸封面。标题、Logo、产品 / 技术名称由后期准确叠加。
+
+| Asset ID | 尺寸 | 输出路径 | 生成依据 | 人工检查 | 状态 | 备注 |
+|---|---|---|---|---|---|---|
+| cover-16x9 | 16:9 / 1920×1080 | assets/covers/cover-16x9.png | video-plan.md Cover Image Prompt | cover-needs-human-review | planned | 必须突出当前产品 / 技术名称 |
+| cover-1080x608 | 1080×608 | assets/covers/cover-video-account-1080x608.png | approved 16:9 cover | after-cover-approved | planned | 基于通过审核的 16:9 图生成 |
+| cover-1080x1260 | 1080×1260 | assets/covers/cover-video-account-1080x1260.png | approved 16:9 cover | after-cover-approved | planned | 基于通过审核的 16:9 图生成 |
+
 ## 后期包装清单
 
 | Shot ID | 类型 | 内容 | 出现时机 | 备注 |
@@ -85,4 +95,6 @@ Logo 使用：<是否需要露出自有 / 授权开源社区 Logo；建议写明
 - [ ] 原始视频复用镜头写明素材路径、截取区间、画面重点、后期标注。
 - [ ] `配音文案` 列与 `narration.md` 同 Shot ID 分镜配音逐字一致，没有摘要、改写或另写。
 - [ ] 单镜头配音没有过长；如超过 15 秒，已拆镜头或明确为长演示片段，不能摘要改写配音映射。
+- [ ] 封面是否先生成 16:9 主封面并人工检查通过，再生成 1080×608 和 1080×1260？
+- [ ] 封面是否突出当前文章产品 / 技术名称，且标题 / Logo 由后期准确叠加？
 - [ ] 所有可读文字、Logo、代码、字幕、UI 标签都安排为后期添加。

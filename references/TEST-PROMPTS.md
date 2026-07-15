@@ -88,3 +88,15 @@ Prompt：这个 HTML 已经人工验证通过，请用 ffmpeg 录屏。
 - 优先使用 Chrome / Edge + ffmpeg `gdigrab` 或 `scripts/record_html_with_ffmpeg.py`。
 - 输出到 `assets/recordings/<diagram-id>.mp4`。
 - 更新 `asset-manifest.md`。
+
+
+## 10. Cover / 视频号封面
+
+Prompt：请根据这篇文章生成视频封面，并输出视频号封面尺寸。
+
+期望：
+- 读取 `references/COVER.md`。
+- 先生成 16:9 主封面，突出当前文章产品 / 技术名称。
+- 16:9 主封面生成后必须停下，要求人工检查 `Cover Review`。
+- 人工确认 `Cover Review: approved` 前，不生成 1080×608 和 1080×1260。
+- 视频号尺寸必须基于已确认的 16:9 主封面生成，不重新发散设计。
