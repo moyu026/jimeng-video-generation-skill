@@ -1,183 +1,148 @@
 #!/usr/bin/env python3
-"""Record an approved HTML diagram with Chrome/Edge + ffmpeg on Windows.
+"""Record a fullscreen HTML diagram on Windows.
 
-This script intentionally stays semi-automatic:
-1. It opens the HTML in browser recording mode (?record=1).
-2. The human checks the fullscreen/window state.
-3. After Enter, ffmpeg records the desktop for a fixed duration.
-4. The human presses R immediately after recording starts to replay animation.
-
-Why semi-automatic: Windows window capture, DPI scaling, browser focus, and animation
-restart are more reliable with one human checkpoint than with brittle UI automation.
+The HTML declares its animation length with data-animation-duration. The actual
+recording always lasts animation_duration + 1 second.
 """
-
 from __future__ import annotations
 
 import argparse
-import shutil
+import re
 import subprocess
 import sys
 import time
-import webbrowser
 from pathlib import Path
 from urllib.parse import urljoin
 from urllib.request import pathname2url
 
+DEFAULT_CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+WIDTH, HEIGHT = 1920, 1080
+ANIMATION_DURATION_RE = re.compile(r"data-animation-duration\s*=\s*['\"]([0-9]+(?:\.[0-9]+)?)['\"]", re.I)
 
-def file_url(path: Path, record: bool = True) -> str:
-    url = urljoin("file:", pathname2url(str(path.resolve())))
-    return url + ("?record=1" if record else "")
+
+def file_url(path: Path) -> str:
+    return urljoin("file:", pathname2url(str(path.resolve()))) + "?record=1"
 
 
-def find_browser(explicit: str | None = None) -> str | None:
-    candidates = []
-    if explicit:
-        candidates.append(explicit)
-    candidates.extend(
-        [
-            shutil.which("chrome"),
-            shutil.which("msedge"),
-            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-            r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-            r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-        ]
+def animation_duration_from_html(path: Path) -> float | None:
+    match = ANIMATION_DURATION_RE.search(path.read_text(encoding="utf-8"))
+    return float(match.group(1)) if match else None
+
+
+def recording_duration(animation_duration: float) -> float:
+    if animation_duration <= 0:
+        raise ValueError("animation duration must be positive")
+    return animation_duration + 1.0
+
+def hide_window() -> subprocess.STARTUPINFO:
+    startup = subprocess.STARTUPINFO()
+    startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startup.wShowWindow = 0
+    return startup
+
+
+def launch_chrome(chrome: str, url: str, profile: str) -> subprocess.Popen:
+    return subprocess.Popen([
+        chrome,
+        f"--user-data-dir={profile}",
+        "--new-window",
+        "--kiosk",
+        f"--app={url}",
+        "--disable-extensions",
+        "--no-first-run",
+        "--no-default-browser-check",
+    ])
+
+
+def send_r_to_chrome() -> None:
+    script = (
+        "Add-Type -AssemblyName System.Windows.Forms;"
+        "Add-Type @'\n"
+        "using System;\n"
+        "using System.Runtime.InteropServices;\n"
+        "public class Win32 { [DllImport(\"user32.dll\")] public static extern bool SetForegroundWindow(IntPtr h); }\n"
+        "'@;"
+        "$w=(Get-Process chrome -ErrorAction SilentlyContinue|Sort-Object StartTime -Descending|Select-Object -First 1).MainWindowHandle;"
+        "if($w -and $w -ne 0){[void][Win32]::SetForegroundWindow($w);Start-Sleep -Milliseconds 150;"
+        "[System.Windows.Forms.SendKeys]::SendWait('r')}"
     )
-    for item in candidates:
-        if item and Path(item).exists():
-            return item
-    return None
+    subprocess.run(["powershell.exe", "-NoProfile", "-Command", script], capture_output=True, text=True)
 
 
-def find_ffmpeg(explicit: str | None = None) -> str | None:
-    candidates = []
-    if explicit:
-        candidates.append(explicit)
-    candidates.extend([shutil.which("ffmpeg"), r"D:\ffmpeg-8.0.1-full_build\bin\ffmpeg.exe"])
-    for item in candidates:
-        if item and Path(item).exists():
-            return item
-    return None
-
-
-def open_browser(browser: str | None, url: str, app_mode: bool) -> subprocess.Popen | None:
-    if browser:
-        args = [browser]
-        if app_mode:
-            args.extend([f"--app={url}"])
-        else:
-            args.append(url)
-        return subprocess.Popen(args)
-    webbrowser.open(url)
-    return None
-
-
-def build_ffmpeg_cmd(ffmpeg: str, output: Path, duration: float, fps: int, offset_x: int | None, offset_y: int | None, width: int | None, height: int | None) -> list[str]:
-    input_name = "desktop"
-    cmd = [
-        ffmpeg,
-        "-y",
-        "-f",
-        "gdigrab",
-        "-framerate",
-        str(fps),
+def record_blocking(ffmpeg: str, output: Path, record_duration: float, fps: int, encoder: str) -> int:
+    command = [
+        ffmpeg, "-y", "-f", "gdigrab", "-framerate", str(fps),
+        "-offset_x", "0", "-offset_y", "0", "-video_size", f"{WIDTH}x{HEIGHT}",
+        "-i", "desktop", "-t", str(record_duration), "-an",
+        "-c:v", encoder, "-pix_fmt", "yuv420p",
     ]
-    if offset_x is not None:
-        cmd.extend(["-offset_x", str(offset_x)])
-    if offset_y is not None:
-        cmd.extend(["-offset_y", str(offset_y)])
-    if width is not None and height is not None:
-        cmd.extend(["-video_size", f"{width}x{height}"])
-    cmd.extend(
-        [
-            "-i",
-            input_name,
-            "-t",
-            str(duration),
-            "-an",
-            "-c:v",
-            "libx264",
-            "-pix_fmt",
-            "yuv420p",
-            "-preset",
-            "veryfast",
-            "-crf",
-            "18",
-            str(output),
-        ]
-    )
-    return cmd
+    command += ["-preset", "veryfast", "-global_quality", "18"] if encoder == "h264_qsv" else ["-b:v", "8M"]
+    command.append(str(output))
+    print("ffmpeg:", " ".join(command))
+    process = subprocess.Popen(command, startupinfo=hide_window(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    time.sleep(0.5)
+    send_r_to_chrome()
+    _, stderr = process.communicate()
+    if process.returncode:
+        print(stderr[-800:], file=sys.stderr)
+    return process.returncode
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Record HTML diagram via browser + ffmpeg gdigrab on Windows.")
-    parser.add_argument("html", help="Path to assets/html/<diagram-id>.html")
-    parser.add_argument("-o", "--output", help="Output mp4 path. Default: assets/recordings/<diagram-id>.mp4")
-    parser.add_argument("-d", "--duration", type=float, default=8.0, help="Recording duration in seconds. Default: 8")
-    parser.add_argument("--fps", type=int, default=30, help="Recording fps. Default: 30")
-    parser.add_argument("--browser", help="Browser executable path. Auto-detect Chrome/Edge by default.")
-    parser.add_argument("--ffmpeg", help="ffmpeg executable path. Auto-detect by default.")
-    parser.add_argument("--no-app", action="store_true", help="Open normal browser tab instead of app window.")
-    parser.add_argument("--offset-x", type=int, help="gdigrab crop offset x")
-    parser.add_argument("--offset-y", type=int, help="gdigrab crop offset y")
-    parser.add_argument("--width", type=int, help="gdigrab crop width, e.g. 1920")
-    parser.add_argument("--height", type=int, help="gdigrab crop height, e.g. 1080")
-    parser.add_argument("--skip-browser", action="store_true", help="Do not open browser; only record current screen after confirmation.")
+    parser = argparse.ArgumentParser(description="Fullscreen-record HTML for animation duration + 1 second.")
+    parser.add_argument("html")
+    parser.add_argument("-o", "--output")
+    parser.add_argument("-d", "--duration", type=float, help="Animation duration in seconds; recording automatically adds 1 second.")
+    parser.add_argument("--fps", type=int, default=30)
+    parser.add_argument("--encoder", default="h264_qsv", choices=["h264_qsv", "h264_mf"])
+    parser.add_argument("--chrome", default=DEFAULT_CHROME)
+    parser.add_argument("--no-browser", action="store_true")
+    parser.add_argument("--hold", type=float, default=0.0)
     args = parser.parse_args()
 
-    html_path = Path(args.html)
-    if not html_path.exists():
-        print(f"ERROR: HTML not found: {html_path}", file=sys.stderr)
+    html = Path(args.html)
+    if not html.is_file():
+        print(f"ERROR: HTML not found: {html}", file=sys.stderr)
+        return 2
+    if not args.no_browser and not Path(args.chrome).is_file():
+        print(f"ERROR: Chrome not found: {args.chrome}", file=sys.stderr)
         return 2
 
-    output = Path(args.output) if args.output else html_path.parents[1] / "recordings" / f"{html_path.stem}.mp4"
+    animation_duration = args.duration if args.duration is not None else animation_duration_from_html(html)
+    if animation_duration is None:
+        print("ERROR: set data-animation-duration on .stage or pass --duration.", file=sys.stderr)
+        return 2
+    try:
+        record_duration = recording_duration(animation_duration)
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+
+    output = Path(args.output) if args.output else html.parents[1] / "recordings" / f"{html.stem}.mp4"
     output.parent.mkdir(parents=True, exist_ok=True)
+    print(f"animation duration: {animation_duration:.3f}s")
+    print(f"recording duration: {record_duration:.3f}s (animation + 1s)")
 
-    ffmpeg = find_ffmpeg(args.ffmpeg)
-    if not ffmpeg:
-        print("ERROR: ffmpeg not found. Install ffmpeg or pass --ffmpeg <path>.", file=sys.stderr)
-        return 2
+    browser = None
+    try:
+        if not args.no_browser:
+            profile = str(html.parents[1] / "_chrome_profile")
+            url = file_url(html)
+            print(f"opening fullscreen: {url}")
+            browser = launch_chrome(args.chrome, url, profile)
+            time.sleep(2.0)
+        if args.hold:
+            time.sleep(args.hold)
+        result = record_blocking("ffmpeg", output, record_duration, args.fps, args.encoder)
+        if result and args.encoder == "h264_qsv":
+            print("qsv failed, retrying with h264_mf...")
+            result = record_blocking("ffmpeg", output, record_duration, args.fps, "h264_mf")
+    finally:
+        if browser:
+            browser.terminate()
 
-    browser = find_browser(args.browser)
-    if not browser and not args.skip_browser:
-        print("WARN: Chrome/Edge not found, falling back to default browser.")
-
-    url = file_url(html_path, record=True)
-    if not args.skip_browser:
-        print(f"Opening browser: {browser or 'default'}")
-        print(f"URL: {url}")
-        open_browser(browser, url, app_mode=not args.no_app)
-        time.sleep(1.0)
-
-    print("\nBefore recording:")
-    print("1. Make the browser/window fullscreen or ensure the target area is visible.")
-    print("2. Confirm the HTML has passed human review: HTML Review: approved.")
-    print("3. After pressing Enter here, ffmpeg starts recording.")
-    print("4. Immediately press R in the browser to replay the animation from the beginning.\n")
-    input("Press Enter to start ffmpeg recording...")
-
-    cmd = build_ffmpeg_cmd(
-        ffmpeg=ffmpeg,
-        output=output,
-        duration=args.duration,
-        fps=args.fps,
-        offset_x=args.offset_x,
-        offset_y=args.offset_y,
-        width=args.width,
-        height=args.height,
-    )
-
-    print("Running:")
-    print(" ".join(f'"{c}"' if " " in c else c for c in cmd))
-    print("\nRecording now. Press R in the browser if you have not already.\n")
-    proc = subprocess.run(cmd)
-    if proc.returncode != 0:
-        print("ERROR: ffmpeg recording failed.", file=sys.stderr)
-        return proc.returncode
-
-    print(f"Done: {output}")
-    print("Next: replay the mp4 and update asset-manifest.md with path, duration, resolution, and status.")
-    return 0
+    print("done:", output, output.exists(), output.stat().st_size if output.exists() else 0)
+    return result
 
 
 if __name__ == "__main__":

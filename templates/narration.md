@@ -1,27 +1,23 @@
 # Narration
 
-> Final voiceover text. Do not include non-spoken headings, table labels, or production notes in the spoken draft.
+> 先写唯一配音总稿，再按 Shot ID 原样切分。下面是最小占位结构；生成实际规划时，在 S00 与最后的 outro 之间插入主体镜头并重新连续编号。
 
 ## 配音总稿
 
-<!-- Write the unique full voiceover here. The text should be natural to read aloud and technically accurate. -->
-
-> 配音总稿是唯一配音文本来源。先写定这一份总稿，再按 Shot ID 原样切分到下方映射；映射不能摘要、改写、换词或压缩。
+请在此填写封面配音。openJiuwen开源社区致力于打造精准、易用、高效的生产级AI Agent。欢迎大家持续关注公众号后台回复开源加入开发交流群，解锁更多实用的智能体案例与前沿技术干货.
 
 ## 分镜配音映射
 
-| Shot ID | 时间段 | 配音文案 | 字数 | 预估时长 | 备注 |
-|---|---|---|---:|---:|---|
-| S01 | 00:00-00:08 |  |  |  | 从配音总稿原样切分；不得摘要改写 |
+| Shot ID | 段落角色 | 配音文案 | 音频文件 | 字数 | 预估时长 | 状态 |
+|---|---|---|---|---:|---:|---|
+| S00 | cover | 请在此填写封面配音。 | materials/MP3/audio0.mp3 |  |  | draft |
+| S01 | outro | openJiuwen开源社区致力于打造精准、易用、高效的生产级AI Agent。欢迎大家持续关注公众号后台回复开源加入开发交流群，解锁更多实用的智能体案例与前沿技术干货. | materials/MP3/audio1.mp3 |  |  | fixed |
 
 ## 配音自检
 
-- [ ] 配音总稿只包含可朗读内容，没有标题、序号、表格说明等非口播内容。
-- [ ] 技术观点尽量来自原文，表达准确克制。
-- [ ] 每个 Shot ID 都有对应配音或明确标记为无配音。
-- [ ] 分镜配音映射只是对配音总稿做原样切分，没有摘要、改写、换词、压缩或补写。
-- [ ] 去除段落空白后，所有分镜配音按 Shot ID 顺序拼接结果与配音总稿逐字一致。
-- [ ] `shot-list.md` 的配音文案列与本文件同 Shot ID 配音文案逐字一致。
-- [ ] 如文件已落盘，已运行 `scripts/check_narration_consistency.py --narration narration.md --shot-list shot-list.md` 或手动完成同等校验。
-- [ ] 单镜头配音过长时，已经拆镜头或拆配音节拍，而不是摘要映射。
-- [ ] 规划阶段未生成最终 SRT；SRT 等最终音频确认后再生成 / 校准。
+- [ ] S00 是封面配音，对应 audio0.mp3。
+- [ ] 最后一个 Shot 使用固定 outro 文案。
+- [ ] Shot ID 与 audioN 编号连续、一一对应。
+- [ ] 分镜配音拼接后与配音总稿逐字一致。
+- [ ] shot-list.md 同 Shot 配音逐字一致。
+- [ ] 用户已经检查并确认 narration.md。

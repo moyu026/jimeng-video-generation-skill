@@ -1,99 +1,29 @@
-# jimeng-video-generation
+# Jimeng Video Generation Skill
 
-轻量端到端即梦 / AI 视频生产编排 Skill。
+把技术材料编排为带配音、BGM 和字幕的即梦 / AI 技术解读视频。
 
-它用于把技术发布稿、产品文档、Markdown、截图、录屏、架构图、流程图、机制图等素材，组织成可执行的视频生产项目：
-
-- 视频结构规划、分镜脚本与配音稿
-- 逐镜头 AI 视频 Prompt 与即梦 CLI 生成任务
-- 原图转 HTML 动态图解、人工验证与 Chrome / Edge + ffmpeg 图解录屏
-- 16:9 主封面、人工检查与视频号封面尺寸变体
-- 用户提供音频接入
-- 从音频或视频生成 SRT 字幕、字幕校准与烧录
-- 视频剪辑脚本：音频拼接、音视频变速对齐、分段合成、BGM 混音
-- 资产清单与剪辑交付说明
-
-## 设计原则
-
-采取轻量模块化设计模式：
+核心流程：
 
 ```text
-SKILL.md        # 主流程 / 路由 / Checkpoint
-references/     # 各模块契约与细节规则
-templates/      # 协作文件模板
-scripts/        # 少量脚手架脚本
+环境检查 → 规划三文件 → 用户确认 narration/shot-list → 用户生成 audioN
+→ S00 封面循环帧 + 主体视频 + 用户 outro → 素材检查 → 变速
+→ 旁白与 BGM 合成 → Whisper → narration 校验 → 字幕烧录
 ```
 
-不在第一版引入复杂 `schemas/`、`evals/` 或大量自动化脚本。
+固定命名：
 
-## 目录结构
+- 视频：`materials/MP4/S00.mp4...SNN.mp4`
+- 配音：`materials/MP3/audio0.mp3...audioN.mp3`
+- BGM：`materials/MP3/bgm.mp3`
+- 变速视频：`materials/video_output/S00.mp4...SNN.mp4`
+- 成片：`materials/output/final_video_subtitled.mp4`
 
-```text
-jimeng-video-generation/
-├── manifest.json
-├── README.md
-├── SKILL.md
-├── references/
-│   ├── PLANNING.md
-│   ├── JIMENG-CLI.md
-│   ├── HTML-DIAGRAM.md
-│   ├── HTML-RECORDING.md
-│   ├── COVER.md
-│   ├── SUBTITLES.md
-│   ├── EDITING.md
-│   ├── DELIVERY.md
-│   └── TEST-PROMPTS.md
-├── scripts/
-│   ├── scaffold.sh
-│   ├── merge_audio.py
-│   ├── match_video_speed_to_audio.py
-│   ├── merge_video_audio_segments.py
-│   ├── add_bgm_to_video.py
-│   ├── record_html_with_ffmpeg.py
-│   └── check_narration_consistency.py
-└── templates/
-    ├── video-plan.md
-    ├── narration.md
-    ├── shot-list.md
-    ├── asset-manifest.md
-    ├── edit-guide.md
-    └── html-diagram-template.html
-```
+`S00` 是封面图循环帧，最后一个视频是用户提供的 outro。流程不制作后期图文包装，只在最后烧录已按 narration 校验的字幕。
 
-## 默认工作流
-
-```text
-素材理解 → Planning → Checkpoint Plan → Assets → Checkpoint Assets → User Audio → Checkpoint User Audio → Editing → Subtitles → Delivery
-```
-
-## 初始化项目
+初始化项目：
 
 ```bash
-bash .claude/skills/jimeng-video-generation/scripts/scaffold.sh output/my-video
+python scripts/scaffold_project.py output/my-video
 ```
 
-## 可选运行依赖
-
-剪辑脚本和字幕流程需要本机工具：
-
-```bash
-ffmpeg -version
-ffprobe -version
-chrome --version  # 或检查 Edge / Chrome 是否已安装
-whisper --help
-```
-
-- `ffmpeg` / `ffprobe`：HTML 图解录屏、视频合成、音频处理、字幕烧录所需的系统依赖。
-- `openai-whisper`：提供 `whisper` CLI，用于从音频或视频生成 SRT。可通过 `pip install -r requirements.txt` 安装 Python 依赖。
-- 烧录中文字幕时，系统需要可用中文字体；`Microsoft YaHei` 不存在时需替换为本机字体。
-
-## 关键边界
-
-- 不要默认跑完整链路；按用户意图路由。
-- 规划阶段不生成最终 SRT。
-- HTML 图解录屏默认使用 Chrome / Edge + ffmpeg；每张 HTML 必须人工验证通过后才能录屏。
-- 封面默认先生成 16:9 无字主视觉背景，再用 `scripts/create_cover_with_text.py` 后期叠加准确标题、产品 / 技术名称和 Logo；人工检查通过后再基于该图生成 1080×608 与 1080×1260 视频号封面。
-- SRT 在用户提供最终音频或最终视频后再生成 / 校准。
-- 也可用 Whisper 从最终音频或最终视频生成 SRT，并用 ffmpeg 将字幕烧录到视频。
-- 原图处理必须先让用户在两个分支中选择：复用原图 + 统一背景图；将原图按原结构重绘为 HTML 动态图解。
-- AI 视频中禁止生成可读文字、字母、Logo、真实代码、品牌标识；这些由后期添加。
+详细行为以 `SKILL.md` 和 `references/` 为准。

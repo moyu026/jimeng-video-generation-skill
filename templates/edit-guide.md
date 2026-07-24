@@ -1,28 +1,23 @@
 # Edit Guide
 
-## Timeline
+## Sequence
 
-| Order | Shot ID | Asset Path | Duration | Edit Notes |
-|---:|---|---|---:|---|
-| 1 | S01 |  |  |  |
+1. Concatenate speed-matched `S00...SNN` in numeric order.
+2. Replace every source audio track with matching `audio0...audioN`.
+3. Mix `bgm.mp3` below narration.
+4. Burn validated `subtitles/subtitles.srt` into the final video.
 
-## Overlays
+## Rules
 
-- Titles:
-- Subtitles:
-- Arrows / callouts:
-- Logo / brand assets:
-- UI labels:
-
-## Audio
-
-- Voiceover:
-- Music:
-- SFX:
+- S00 is the repeated cover frame segment.
+- The last shot is the user-provided outro.
+- Do not add post-production text, titles, arrows, boxes, logos, or UI labels.
+- Preserve clear narration above BGM.
 
 ## Export
 
-- Aspect ratio: 16:9
-- Resolution: 1920x1080
-- FPS:
-- Format: mp4
+- Resolution:
+- FPS: 30
+- Video codec: H.264
+- Audio codec: AAC
+- Final path: materials/output/final_video_subtitled.mp4

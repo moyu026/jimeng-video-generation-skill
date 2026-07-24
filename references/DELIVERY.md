@@ -1,47 +1,34 @@
 # Delivery 模块
 
-## 何时读取
+`asset-manifest.md` 必须随生产过程增量更新，不要等到交付阶段集中补写：
 
-当素材、音频、字幕基本完成，需要整理给剪辑或交付时读取。
+- 初始化时按 Shot 建立记录。
+- 音频、outro 或原视频到位后更新路径、来源和状态。
+- 变速视频、合成视频、SRT、字幕成片生成后更新对应路径和状态。
+- 状态只使用 `planned`、`waiting-user`、`ready`；Notes 只写必要说明。
 
 ## 输入
 
-- `shot-list.md`
-- `asset-manifest.md`
-- `narration.md`
+- `video-plan.md`、`narration.md`、`shot-list.md`
+- `materials/MP4/S00...SNN`
+- `materials/MP3/audio0...audioN` 与 `bgm.mp3`
+- `materials/video_output/S00...SNN`
+- `materials/output/final_voice.mp4`
+- `materials/output/final_video.mp4`
+- `materials/output/final_video_subtitled.mp4`
 - `subtitles/subtitles.srt`
-- 所有生成或复用的素材文件
-
-## 输出
-
-```text
-asset-manifest.md
-edit-guide.md
-```
 
 ## 工作步骤
 
-1. 汇总所有素材：即梦视频、HTML 录屏、原始视频 / 图片、用户提供音频、字幕。
-2. 检查每个镜头是否有可用素材。
-3. 更新 `asset-manifest.md`：资产 ID、类型、路径、来源模块、状态、时长、备注。
-4. 编写 `edit-guide.md`：剪辑顺序、转场、标题、字幕、箭头、框选、Logo、UI 标签、导出建议。
-5. 标记缺失或需人工处理的资产。
+1. 复核 `asset-manifest.md` 中每个 Shot 的原视频、音频、变速视频和状态。
+2. 确认 `S00` 为封面循环帧，最后一个 Shot 为用户提供的 outro。
+3. 确认 BGM、无 BGM 旁白、无字幕成片、SRT 和字幕成片均已登记。
+4. 在 `edit-guide.md` 记录实际拼接顺序、分辨率、帧率、字幕样式和最终文件路径。
+5. 不写后期图文包装说明。
 
 ## 完成标准
 
-- 剪辑人员只看 `asset-manifest.md` 和 `edit-guide.md` 就能接手。
-- 每个镜头有素材路径或缺失说明。
-- 后期文字、字幕、Logo、箭头、框选位置说明清楚。
-
-## 失败 / 退化路径
-
-- 素材缺失：标记为 `missing`，说明补救方案。
-- 时长未知：标记 `duration: TBD`。
-- 剪辑顺序不确定：回到 `shot-list.md` 让用户确认。
-
-## 自检清单
-
-- [ ] 每个镜头是否有素材或缺失说明？
-- [ ] 用户音频和字幕路径是否登记？
-- [ ] 后期包装要求是否明确？
-- [ ] 是否列出最终导出建议？
+- 素材编号连续且一一对应。
+- 环境、素材、配音、字幕校验均有通过状态。
+- 最终交付文件存在且可播放。
+- `asset-manifest.md` 和 `edit-guide.md` 足以复现合成顺序。

@@ -1,120 +1,55 @@
 # Subtitles 模块
 
-## 何时读取
+## 前置条件
 
-当用户提供最终音频或最终视频，并确认需要生成 / 校准 SRT 字幕、从音频 / 视频转字幕，或将字幕烧录进视频时读取。
+- `materials/output/narration.mp3`、`materials/output/final_video.mp4` 和 `narration.md` 已存在。
+- `whisper`、`ffmpeg`、`ffprobe` 和可用中文字体已通过环境检查。
 
-## 输入
+## 生成字幕
 
-- `narration.md`
-- `merge.mp3`、用户提供的最终音频，或最终视频文件
-- 最终镜头时长、剪辑时间线或 `shot-list.md`
-
-## 前置依赖
-
-- `whisper` CLI：由 Python 包 `openai-whisper` 提供，可用 `pip install -r requirements.txt` 安装。
-- `ffmpeg` 和 `ffprobe`：系统命令，Whisper 读取音视频和 ffmpeg 烧录字幕都依赖它们。
-- 中文字体：烧录中文 SRT 时，`force_style` 中的 `FontName` 必须是本机可用字体。
-
-检查命令：
+优先使用无 BGM 旁白：
 
 ```bash
-whisper --help
-ffmpeg -version
-ffprobe -version
+whisper materials/output/narration.mp3 --language Chinese --task transcribe --model medium --output_format srt --output_dir subtitles
 ```
 
-## 输出
+将 Whisper 输出重命名为：
 
 ```text
 subtitles/subtitles.srt
 ```
 
-可选输出：
+## 按 narration 校验
+
+1. 以 `narration.md` 为文字基准，修正 Whisper 的专有名词、英文技术名、漏字、错字和标点。
+2. 保留 Whisper 时间码，只修改文字；需要拆分字幕时保持时间连续、不重叠。
+3. 最后一段 outro 字幕内容必须为：
 
 ```text
-final_with_subtitle.mp4
+openJiuwen开源社区致力于打造精准、易用、高效的生产级AI Agent。欢迎大家持续关注公众号后台回复开源加入开发交流群，解锁更多实用的智能体案例与前沿技术干货.
 ```
 
-## 工作步骤
-
-1. 确认最终音频或最终视频已经存在。
-2. 获取音频总时长；必要时使用 ffprobe / 剪辑软件信息。
-3. 按 `narration.md` 语义切分字幕，避免单条过长。
-4. 根据音频时长和镜头时间线生成 / 校准时间码。
-5. 输出标准 SRT。
-6. 如用户要求烧录字幕，使用 ffmpeg 输出带字幕视频。
-7. 将字幕路径和带字幕视频路径写入 `asset-manifest.md` 或 `edit-guide.md`。
-
-## Whisper 生成 SRT
-
-从音频生成中文字幕：
+4. 运行：
 
 ```bash
-whisper merge.mp3 --language Chinese --task transcribe --model medium --output_format srt
+python scripts/validate_subtitles_against_narration.py --narration narration.md --srt subtitles/subtitles.srt
 ```
 
-也可以把输入替换为视频文件，Whisper 会从视频音轨转写：
-
-```bash
-whisper materials/output/final_video.mp4 --language Chinese --task transcribe --model medium --output_format srt
-```
-
-规则：
-
-- 输入文件必须是最终音频或最终视频；不要在分镜规划阶段生成最终 SRT。
-- 如果 Whisper 不可用，说明需要安装 OpenAI Whisper 或改用用户提供的字幕文件。
-- Whisper 输出文件通常与输入同名，例如 `merge.srt` 或 `final_video.srt`；交付时可按项目约定复制 / 重命名为 `subtitles/subtitles.srt`。
-- 生成后必须抽查中文识别、专有名词、英文产品名和时间码。
+校验失败时继续修正，直到退出码为 0。
 
 ## 烧录字幕
 
-将 SRT 烧录到最终视频：
+Windows 示例：
 
 ```bash
-ffmpeg -y -i materials/output/final_video.mp4 -vf "subtitles=merge.srt:force_style='FontName=Microsoft YaHei,FontSize=15,Outline=0,Shadow=0,Alignment=2,MarginV=30'" -c:a copy final_with_subtitle.mp4
+ffmpeg -y -i materials/output/final_video.mp4 -vf "subtitles=subtitles/subtitles.srt:force_style='FontName=Microsoft YaHei,FontSize=15,Outline=1,Shadow=0,Alignment=2,MarginV=30'" -c:a copy -movflags +faststart materials/output/final_video_subtitled.mp4
 ```
 
-如果项目成片在 `materials/memory/output/`，使用：
-
-```bash
-ffmpeg -y -i materials/memory/output/final_video.mp4 -vf "subtitles=merge.srt:force_style='FontName=Microsoft YaHei,FontSize=15,Outline=0,Shadow=0,Alignment=2,MarginV=30'" -c:a copy final_with_subtitle.mp4
-```
-
-使用规则：
-
-- `subtitles=...` 指向实际 SRT 路径；路径含空格或特殊字符时优先改成简单英文路径。
-- `FontName=Microsoft YaHei` 适合中文环境；非 Windows 环境若字体不可用，应换成本机已安装中文字体。
-- `Alignment=2` 表示底部居中，`MarginV=30` 控制底部边距。
-- 烧录会重新编码视频画面；如只需外挂字幕，不要使用此命令。
-
-## SRT 规则
-
-- 从 `00:00:00,000` 开始。
-- 时间连续、不重叠。
-- 格式兼容主流剪辑软件。
-- 字幕不宜过长，长句应拆分。
-- 无配音段不生成字幕，或明确标记为无声过场。
+非 Windows 环境将 `FontName` 换为已安装的中文字体。路径包含特殊字符时，先把 SRT 放到简单英文路径。
 
 ## 完成标准
 
-- `subtitles/subtitles.srt` 或用户指定的 SRT 文件存在。
-- 时间轴与最终音频和镜头时长一致。
-- 无重叠、无倒退、无异常空洞。
-- 如生成带字幕视频，视频可播放且字幕位置、字号、中文字体正常。
-
-## 失败 / 退化路径
-
-- 音频 / 视频不存在：要求用户提供最终音频 / 视频，或回到 Editing 模块生成最终视频。
-- 无法获取音频时长：请求用户提供时长，或生成草稿 SRT 并明确标记。
-- 文稿和音频不一致：要求用户确认以音频还是文稿为准。
-- Whisper 不可用：提示安装或要求用户提供 SRT。
-- 字体不可用：更换 `force_style` 中的 `FontName`，或安装对应中文字体。
-
-## 自检清单
-
-- [ ] 是否在最终音频或最终视频后生成？
-- [ ] 是否从 00:00:00,000 开始？
-- [ ] 是否连续不重叠？
-- [ ] 是否兼容标准 SRT？
-- [ ] 如烧录字幕，字幕是否无乱码、无越界？
+- SRT 时间从 0 开始，连续、不倒退、不重叠。
+- 字幕文字与 `narration.md` 校验通过。
+- 最后 outro 文案完整准确。
+- `final_video_subtitled.mp4` 可播放，字幕无乱码、无越界。

@@ -1,269 +1,167 @@
 ---
 name: jimeng-video-generation
-description: 为即梦 / AI 视频生成场景，把技术发布稿、产品文档、Markdown、截图、录屏、架构图、流程图、机制图等素材，规划并生产技术发布解读视频。支持生成视频结构规划、分镜脚本、配音稿、逐镜头 AI 视频 Prompt、即梦 CLI 生成任务、文章原图转 HTML 动态图解、HTML 录屏、16:9 主封面与视频号封面、用户提供音频接入、音视频生成 SRT 字幕、字幕烧录、视频音频分段合成、变速对齐、BGM 混音、资产清单与剪辑交付说明。适用于“生成即梦视频 / 技术发布短视频 / 产品功能解读视频 / AI 视频 Prompt / 图片转 HTML 动态图解 / HTML 录屏 / 配音字幕 / 视频剪辑脚本 / 整理剪辑交付资产”等请求。该 Skill 采用分阶段工作流：先规划，再经用户确认后进入素材生产、用户音频确认、剪辑、字幕和交付整理。
+description: 使用即梦 / AI 视频工具把技术发布稿、产品文档、Markdown、截图、架构图和录屏素材制作成完整技术解读视频。用于需要环境检查与配置、生成 video-plan.md / narration.md / shot-list.md、制作封面静帧 S00、按 S00/S01 与 audio0/audio1 一一生成和变速镜头、接入用户提供的 outro、混入 bgm.mp3、用 Whisper 生成并按 narration 校验字幕、烧录字幕和交付成片的请求。也可用于单独执行上述规划、视频生成、音画对齐、字幕或合成阶段。
 ---
 
 # Jimeng Video Generation
 
-面向技术发布、产品新功能、项目更新和技术文章的端到端即梦 / AI 视频生产编排 Skill。
-
-它不是一次性无确认地跑完整链路，而是采用：
+按固定检查点执行技术解读视频生产。只执行用户要求的阶段；完整任务按下列顺序执行：
 
 ```text
-素材理解 → 视频规划 → Checkpoint Plan → 素材生产 → Checkpoint Assets → 用户音频确认 → 剪辑合成 → 字幕 → 交付整理
+环境检查与配置 → 规划 → 用户检查 narration + shot-list → 用户生成分段 MP3
+→ 生成 S00 封面视频和 S01... 主体视频，接入最后一段 outro
+→ 素材完整性检查 → 按音频变速 → 合成旁白、画面和 BGM
+→ Whisper 字幕 + narration 校验 → 烧录字幕 → 交付
 ```
 
-主文件只负责流程路由和检查点；每个生产模块的详细规则放在 `references/`。
+## 固定约定
 
----
-
-## 适用场景
-
-- 基于发布稿 / 产品文档 / Markdown / 截图 / 录屏生成即梦技术解读视频
-- 生成视频结构规划、分镜脚本、配音稿、逐镜头 AI 视频 Prompt
-- 调用即梦 CLI 或生成即梦 CLI 任务说明来生产 AI 视频镜头
-- 将文章原图、架构图、流程图、机制图转为 HTML 动态图解
-- 对 HTML 动态图解进行浏览器录屏，作为视频素材
-- 生成 16:9 主封面，经人工检查后生成 1080×608 与 1080×1260 视频号封面
-- 接入用户提供的配音 / 音频文件，并登记路径和时长
-- 使用脚本完成音频拼接、视频按音频变速、分段音视频合成和 BGM 混音
-- 从最终音频或视频生成 / 校准 SRT 字幕，并可将字幕烧录进视频
-- 整理 `asset-manifest.md` 和 `edit-guide.md`，交付给剪辑
-
-不适用：
-
-- 用户只需要普通文章摘要
-- 用户要做完整网页演示型视频
-- 用户没有素材，只要求凭空构思完整发布内容；应先要求提供素材、大纲或主题说明
-
----
-
-## 核心原则
-
-1. **先规划，再生产**：先生成 `video-plan.md`、`narration.md`、`shot-list.md`，经用户确认后再进入素材生产。
-2. **规划阶段不生成最终 SRT**：SRT 必须在用户提供最终音频或最终视频之后，根据最终音频 / 视频与镜头时长生成 / 校准。
-3. **不要默认跑完整链路**：用户只要求某一项时，只执行对应模块。
-4. **硬 Checkpoint**：进入素材生产、剪辑、字幕前必须确认上游产物；每张 HTML 图解生成后必须人工验证通过，才能录屏；16:9 主封面必须人工检查通过，才能生成视频号尺寸封面。
-5. **技术表达专业克制**：关键技术特性、机制说明、性能收益、边界判断应尽量参考原文提取，不要过度口语化或改成泛营销话术。
-6. **时长动态决定**：根据素材复杂度、信息量和复用视频 / 录屏片段动态决定，总时长控制在 150 秒以内；不要为了压时长删掉必要技术解释。
-7. **原图处理只有两个分支**：复用原图 + 生成统一背景图；将原图按原结构重绘为 HTML 动态图解。
-8. **AI 视频禁止生成关键文字资产**：AI 视频中禁止生成可读文字、字母、Logo、真实代码、品牌标识；文字、标题、字幕、UI 标签由后期添加。
-9. **默认禁止真实人物**：除非用户明确要求，禁止 AI 生成真实人物、人物背影、手部特写。
-10. **英文固定文件名作为协作接口**：端到端流程默认使用 `video-plan.md`、`narration.md`、`shot-list.md`、`asset-manifest.md`、`edit-guide.md`、`subtitles.srt`。
-
----
-## Intent Router：先判断用户当前任务
-
-| 用户意图 | 进入阶段 / 参考文件 | 默认产出 |
-|---|---|---|
-| 只要视频脚本 / 分镜 / 配音稿 | `references/PLANNING.md` | `video-plan.md`、`narration.md`、`shot-list.md` |
-| 只要即梦 Prompt | `references/PLANNING.md` | 单镜头或多镜头 AI 视频 Prompt |
-| 要调用即梦生成 AI 视频 | `references/JIMENG-CLI.md` | `assets/jimeng/*.mp4`、更新 `asset-manifest.md` |
-| 要把原图转 HTML | `references/HTML-DIAGRAM.md` | `assets/html/*.html` |
-| 要调试 HTML 图解 | `references/HTML-DIAGRAM.md` | 局部修改后的 HTML |
-| 要录屏 HTML | `references/HTML-RECORDING.md` | `assets/recordings/*.mp4` |
-| 要生成封面 / 视频号封面 | `references/COVER.md` | `assets/covers/*.png`、更新 `asset-manifest.md` |
-| 要接入用户提供音频 | 本文件 Phase 3 | 确认音频路径、时长和编号对应关系 |
-| 要剪辑合成 / 音视频对齐 / 加 BGM | `references/EDITING.md` | `materials/output/final_video.mp4` 或最终导出视频 |
-| 要从音频或视频生成 / 校准字幕 / 烧录字幕 | `references/SUBTITLES.md` | `subtitles/subtitles.srt` 或带字幕视频 |
-| 要完整端到端视频 | 本文件完整工作流 + 各模块 reference | 规划、素材、音频、字幕、交付清单 |
-| 要优化 Skill 本身 | 先给修改计划，再修改 Skill | Skill 修改计划 / 文档更新 |
-
-追问原则：
-
-- 无法判断产品 / 功能对象：必须追问。
-- 只缺时长、比例、配音风格：不追问，使用默认值。
-- 素材中包含文章原图、架构图、流程图、机制图或产品截图，且用户未明确处理方式：必须先询问两个分支。
-- 用户只要求单项内容：只输出对应内容，不强制生成完整分镜或完整项目。
-
----
-
-## 工作流总览
+- 使用两位 Shot ID：`S00`、`S01`、`S02`……`SNN`。
+- 视频使用 Shot ID 命名：`S00.mp4`、`S01.mp4`……。
+- 配音使用对应数字命名：`audio0.mp3`、`audio1.mp3`……。
+- `S00.mp4` 是封面图循环帧视频，对应 `audio0.mp3`。
+- 最后一个 `SNN.mp4` 是用户提供的 outro，对应 `audioN.mp3`。
+- `materials/MP3/bgm.mp3` 是背景音乐，不参与镜头编号。
+- 视频和配音编号必须从 0 连续到 N，且一一对应。
+- 不制作后期图文包装。画面文字只允许最终字幕；不要规划大字标题、箭头、框选、Logo 或 UI 标签叠加。
+- 主体视频优先使用 `jimeng-video`；每个即梦原始视频生成 6–8 秒。
+- 只有用户提供架构图 / 流程图，且该结构无法用即梦清楚表达时，才使用 `html-recording`；整条视频最多 3 个 HTML 录屏。
+- 最终每段时长由对应 `audioN` 决定，允许对视频变速；整条视频总时长由全部分段音频的总时长决定。
+- 固定 outro 文案：
 
 ```text
-Phase 1  Planning
-  输入素材 → 理解技术主题 → 生成 video-plan.md + narration.md + shot-list.md
-
-[Checkpoint Plan]
-  确认视频结构、配音稿、分镜、素材来源、原图处理方式
-
-Phase 2  Assets
-  ├─ AI 视频镜头 → Jimeng CLI
-  ├─ 文章原图 / 架构图 → HTML 动态图解
-  ├─ Checkpoint HTML Review：人工打开 HTML 验证效果
-  ├─ HTML 图解 → Chrome / Edge + ffmpeg 录屏
-  ├─ 封面 → 16:9 主封面 → Checkpoint Cover Review → 视频号封面
-  ├─ 原始视频 / 录屏 → 复用或裁剪
-  └─ 后期图文包装 → 标题、字幕、箭头、框选
-
-[Checkpoint Assets]
-  确认素材是否就位，是否等待 / 接入用户音频
-
-Phase 3  User Audio
-  接入用户提供的最终音频，确认路径、时长、编号对应关系
-
-[Checkpoint User Audio]
-  确认音频可用，是否进入剪辑合成
-
-Phase 4  Editing
-  根据素材和音频执行变速对齐、分段合成、字幕烧录、BGM 混音等剪辑脚本
-
-Phase 5  Subtitles
-  基于最终音频或最终视频生成 / 校准 subtitles.srt，可选烧录字幕
-
-Phase 6  Delivery
-  整理 asset-manifest.md + edit-guide.md
+openJiuwen开源社区致力于打造精准、易用、高效的生产级AI Agent。欢迎大家持续关注公众号后台回复开源加入开发交流群，解锁更多实用的智能体案例与前沿技术干货.
 ```
 
----
+## 素材目录规范
 
-## 各阶段读取指南
+- 主稿写入 `article.md`；补充文档、截图、架构图、流程图和用户原始视频放入 `assets/original/`。
+- 封面图放入 `assets/covers/`，即梦原始视频放入 `assets/jimeng/`，HTML 和录屏分别放入 `assets/html/`、`assets/recordings/`。
+- 进入剪辑的原视频统一按 Shot ID 复制或重命名到 `materials/MP4/S00.mp4...SNN.mp4`。
+- 用户配音和 BGM 放入 `materials/MP3/`；文件名必须是 `audio0.mp3...audioN.mp3` 和 `bgm.mp3`。
+- 变速视频放入 `materials/video_output/`，合成成片放入 `materials/output/`，字幕放入 `subtitles/`。
+- 每次要求用户提供素材时，同时告诉用户准确的目标目录和文件名。用户从其他位置提供素材时，先整理到上述目录，再进入素材完整性检查。
 
-| 阶段 | 必读 reference | 说明 |
-|---|---|---|
-| Planning | `references/PLANNING.md` | 视频结构、配音稿、分镜、AI Prompt、素材来源规划 |
-| Jimeng CLI | `references/JIMENG-CLI.md` | 即梦任务、生成结果、失败回退、manifest 回填 |
-| HTML Diagram | `references/HTML-DIAGRAM.md` | 原图按结构重绘为 HTML 动态图解，以及强制人工验证 / 反馈调试 |
-| HTML Recording | `references/HTML-RECORDING.md` | 人工验证通过后，用 Chrome / Edge + ffmpeg 录屏 HTML 图解 |
-| Cover | `references/COVER.md` | 16:9 主封面、强制人工检查、视频号尺寸封面 |
-| Editing | `references/EDITING.md` | 视频剪辑脚本：音频拼接、变速对齐、分段合成、BGM 混音 |
-| Subtitles | `references/SUBTITLES.md` | 从音频 / 视频生成 SRT、校准字幕、烧录字幕 |
-| Delivery | `references/DELIVERY.md` | 资产清单、剪辑说明、交付检查 |
-| Test | `references/TEST-PROMPTS.md` | 用轻量测试提示词验证路由和行为 |
+## 素材清单增量更新
 
-运行录屏、剪辑或字幕命令前，先按对应 reference 的“前置依赖”检查 `ffmpeg`、`ffprobe`、`whisper`、Chrome / Edge 和中文字体。
+不要等到交付阶段才补写 `asset-manifest.md`。初始化时按 Shot 建立记录；音频或 outro 到位、原视频生成、变速视频生成、最终产物生成后立即更新对应路径和状态。只维护现有字段，状态使用 `planned`、`waiting-user`、`ready`，必要时在 Notes 写一句说明。
 
----
-## Phase 1：Planning
+## 阶段 0：检查并配置环境
 
-读取 `references/PLANNING.md`，默认产出：
+读取 `references/ENVIRONMENT.md`，运行：
 
-```text
-video-plan.md
-narration.md
-shot-list.md
+```bash
+python scripts/check_environment.py
 ```
 
-规划阶段必须包含：
+检查 Python、FFmpeg、ffprobe、Whisper、Pillow，以及任务需要时的即梦 CLI 和浏览器。若缺失，使用当前系统合适的包管理器或 `requirements.txt` 安装、配置 PATH 或认证，然后重新检查。安装系统软件、联网下载或写入系统目录前，按运行环境要求取得授权。
 
-- 核心功能 / 用户痛点 / 旧方式不足 / 一句话定义 / 核心变化
-- 2–3 个最适合视频表达的核心能力
-- 一个最强实战案例或 Wow Moment
-- 适用场景和边界判断
-- Hook / What / How / Future 四段式叙事
-- 每个镜头的素材类型：AI 视频、原图复用 + 统一背景图、原图转 HTML 动态图解并录屏、原始视频复用、后期包装
-- AI 视频镜头的逐 1–2 秒镜头内时间轴 Prompt；即梦镜头默认优先 4–8 秒，复杂内容优先拆成多个短镜头
-- 唯一配音文本：`配音总稿` 按 Shot ID 原样切分到 `narration.md` 分镜映射，并同步到 `shot-list.md` 配音文案；拼接后必须与总稿逐字一致
-- 视频封面图 Prompt，必须突出当前文章产品 / 技术名称；封面文字、Logo、作者名、平台标签由后期添加
+环境不满足且无法配置时停止，明确列出缺失项，不假装继续生产。
 
-规划阶段禁止生成最终 SRT，禁止未经用户确认直接调用即梦 / 录屏工具，禁止生成配音音频，禁止替用户擅自决定原图处理方式。
+## 阶段 1：生成规划文件
 
----
+读取 `references/PLANNING.md`，根据用户材料生成 `video-plan.md`、`narration.md`、`shot-list.md`。
 
-## Checkpoint Plan
+必须满足：
 
-`video-plan.md`、`narration.md`、`shot-list.md` 完成后必须停下，向用户确认：
+- `shot-list.md` 包含封面图 Prompt。
+- `S00` 是封面段，画面为封面图循环帧。
+- `narration.md` 包含 `S00` 的封面配音。
+- 最后一个 Shot 是 `outro`，使用固定 outro 文案，视频来源标记为用户提供。
+- `narration.md`、`shot-list.md` 中同一 Shot 的配音逐字一致。
+- 不包含后期图文包装。
 
-```text
-规划已完成，产出：
-- video-plan.md：视频结构与叙事骨架
-- narration.md：配音稿
-- shot-list.md：分镜、素材来源、AI Prompt / HTML 图解规划
+运行：
 
-请确认 5 件事：
-1. 视频结构是否合理？
-2. 配音稿是否需要调整？
-3. 分镜和素材来源是否确认？
-4. 原图处理方式是否确认：
-   1）复用原图 + 生成统一背景图
-   2）将原图按原结构重绘为 HTML 动态图解
-5. 是否进入素材生产阶段？
+```bash
+python scripts/check_narration_consistency.py --narration narration.md --shot-list shot-list.md
 ```
 
-用户未确认前，不进入 Phase 2。
+## Checkpoint：用户检查规划
 
----
+生成规划后停止，请用户检查 `narration.md` 的配音、顺序、分段，以及 `shot-list.md` 的画面、Prompt、封面 Prompt、镜头顺序和 outro。
 
-## Phase 2：Assets
+用户提出修改时，同步修改两个文件，再次运行一致性检查并重新请用户确认。用户确认无需修改时，不做无意义改写，直接进入音频准备。
 
-根据 `shot-list.md` 拆分素材生产任务：
+## 阶段 2：用户生成音频
 
-- AI 生成视频镜头：读取 `references/JIMENG-CLI.md`
-- 文章原图 / 架构图 / 流程图：读取 `references/HTML-DIAGRAM.md`，生成后必须执行人工验证
-- HTML 图解录屏：仅在对应 HTML 人工验证通过后读取 `references/HTML-RECORDING.md`，默认使用 Chrome / Edge + ffmpeg `gdigrab` 半自动录屏
-- 封面图：读取 `references/COVER.md`，先生成 16:9 主封面并人工检查，通过后再生成 1080×608 与 1080×1260 视频号封面
-- 原始视频 / 录屏：复用、裁剪或写入剪辑说明
-- 后期图文包装：写入 `edit-guide.md`，不交给 AI 视频模型生成可读文字
+请用户根据确认后的 `narration.md` 生成 `materials/MP3/audio0.mp3` 到 `audioN.mp3`，并提供 `materials/MP3/bgm.mp3`。不得替用户生成配音。收到音频后核对每个 Shot 的编号和配音内容，并将对应音频和 BGM 在 `asset-manifest.md` 中标记为 `ready`。
 
-素材生产完成后更新 `asset-manifest.md`。
+## 阶段 3：生成和接入视频
 
----
+- 使用 `shot-list.md` 中的封面 Prompt 生成封面图。
+- 用封面图和 `audio0.mp3` 创建重复帧视频：
 
-## Checkpoint Assets
-
-素材生产阶段完成后必须停下，确认：即梦视频、HTML 图解、HTML 录屏、封面图、原始素材复用、`asset-manifest.md` 是否就位，以及用户音频是否已提供。用户未确认前，不进入 Phase 3。
-
----
-
-## Phase 3：User Audio
-
-不生成音频。本阶段只接入用户已经提供的最终音频。
-
-需要确认：
-
-- 最终完整音频路径，例如 `merge.mp3`
-- 分段音频路径，例如 `materials/MP3/audio1.mp3`、`audio2.mp3`
-- 音频与 `shot-list.md` 或 `videoN` 的编号对应关系
-- 音频时长；必要时使用 `ffprobe` 获取
-
----
-
-## Checkpoint User Audio
-
-用户音频确认后必须停下，确认文件、时长和编号对应关系。用户未确认前，不进入 Phase 4。
-
----
-
-## Phase 4：Editing
-
-读取 `references/EDITING.md`。按用户目标选择现有脚本：
-
-- `scripts/merge_audio.py`：拼接 `materials/audio*.mp3` 为 `merge.mp3`
-- `scripts/match_video_speed_to_audio.py`：将 `videoN` 变速匹配 `audioN`
-- `scripts/merge_video_audio_segments.py`：将编号视频和音频合成片段后拼接为 `final_video.mp4`
-- `scripts/add_bgm_to_video.py`：给最终视频混入 BGM
-- `scripts/record_html_with_ffmpeg.py`：用 Chrome / Edge + ffmpeg 录制 HTML 图解
-- `scripts/check_narration_consistency.py`：校验配音总稿、分镜映射与 `shot-list.md` 配音文案一致性
-- `scripts/create_cover_with_text.py`：为无字封面背景叠加准确标题、产品 / 技术名称和 Logo，并导出多尺寸封面
-
-执行前必须确认脚本顶部配置区中的输入 / 输出目录符合当前项目；必要时先修改配置或提示用户目录约定。
-
----
-
-## Phase 5：Subtitles
-
-读取 `references/SUBTITLES.md`。SRT 只在用户提供最终音频或最终视频存在后生成 / 校准。输出 `subtitles/subtitles.srt`。
-
-如用户提供最终视频或要求从视频中生成字幕，可直接用视频作为 Whisper 输入；如用户要求“添加字幕 / 烧字幕”，按 `references/SUBTITLES.md` 使用 ffmpeg `subtitles` filter 输出带字幕视频。
-
----
-
-## Phase 6：Delivery
-
-读取 `references/DELIVERY.md`。默认产出：
-
-```text
-asset-manifest.md
-edit-guide.md
+```bash
+python scripts/create_cover_video.py --image assets/covers/cover-16x9.png --audio materials/MP3/audio0.mp3 --output materials/MP4/S00.mp4
 ```
 
-交付说明必须覆盖素材路径、生成来源、配音、字幕、后期包装、剪辑顺序和导出建议。
+- 按 `shot-list.md` 为 `S01` 到倒数第二个 Shot 生成视频，保存为 `materials/MP4/S01.mp4`……；主体默认使用即梦，每个即梦视频生成 6–8 秒。
+- HTML 录屏必须同时满足“用户提供架构图 / 流程图”和“即梦无法清楚表达结构”，总数不得超过 3 个；提醒用户将原图放入 `assets/original/`。
+- HTML 动画镜头必须预留底部 18% 字幕安全区，并用 `data-animation-duration` 声明动画时长。人工验证通过后，统一调用 `E:\pythonwork\0.study\jimeng-video-generation-skill\scripts\record_html_with_ffmpeg.py` 全屏录制；实际录屏时长固定为动画时长 + 1 秒。
+- 不添加后期图文包装。
+- 请用户提供最后一个 outro 视频，保存为 `materials/MP4/SNN.mp4`。最终使用对应 `audioN.mp3`，不使用 outro 自带音轨。
+- 每个原视频生成或收到后，立即更新 `asset-manifest.md` 中的 Raw Video、Source 和状态。
 
----
+调用即梦时读取 `references/JIMENG-CLI.md`。
 
-## 文件输出约定
+## 阶段 4：确认素材完备
 
-默认项目目录：
+运行：
+
+```bash
+python scripts/check_media_inventory.py --shot-list shot-list.md --video-dir materials/MP4 --audio-dir materials/MP3
+```
+
+只有 `S00...SNN` 与 `audio0...audioN` 连续且一一对应、封面段和 outro 均存在、`bgm.mp3` 存在时才能继续。
+
+## 阶段 5：按音频变速视频
+
+读取 `references/EDITING.md`，运行 `python scripts/match_video_speed_to_audio.py`。结果保存到 `materials/video_output/S00.mp4`、`S01.mp4`……。即梦原始视频的 6–8 秒不是最终时长；按对应 `audioN` 变速后，每段视频必须与音频等长，最终成片总时长等于全部分段音频的总时长。
+
+每段变速完成后，更新 `asset-manifest.md` 中的 Speed-matched Video 和状态。
+
+## 阶段 6：合成完整视频
+
+依次运行：
+
+```bash
+python scripts/merge_video_audio_segments.py
+python scripts/add_bgm_to_video.py
+python scripts/merge_audio.py
+```
+
+默认产出 `materials/output/final_voice.mp4`、`final_video.mp4` 和 `narration.mp3`。`final_video.mp4` 必须包含分段配音和 `bgm.mp3`。产出后更新 `asset-manifest.md` 中对应的 Final Assets。
+
+## 阶段 7：生成并校验字幕
+
+读取 `references/SUBTITLES.md`。优先对无 BGM 的旁白合并文件运行 Whisper：
+
+```bash
+whisper materials/output/narration.mp3 --language Chinese --task transcribe --model medium --output_format srt --output_dir subtitles
+```
+
+将结果规范为 `subtitles/subtitles.srt`，根据 `narration.md` 修正专有名词、漏字、错字和标点。最后一段字幕必须使用固定 outro 文案。运行：
+
+```bash
+python scripts/validate_subtitles_against_narration.py --narration narration.md --srt subtitles/subtitles.srt
+```
+
+校验失败时修正字幕并重跑，不能跳过。
+
+字幕校验通过后，将 SRT 在 `asset-manifest.md` 中标记为 `ready`。
+
+## 阶段 8：烧录字幕
+
+按 `references/SUBTITLES.md` 把字幕烧录进 `materials/output/final_video.mp4`，输出 `materials/output/final_video_subtitled.mp4`。检查字幕无乱码、无越界、时间不重叠，且 outro 字幕完整。
+
+字幕成片检查通过后，将其在 `asset-manifest.md` 中标记为 `ready`。
+
+## 阶段 9：交付
+
+读取 `references/DELIVERY.md`，复核已增量更新的 `asset-manifest.md`，并更新 `edit-guide.md`。不要在此阶段才集中补写素材清单。最终至少交付字幕成片、SRT、规划文件和素材清单。
+
+## 项目目录
 
 ```text
 output/<project-name>/
@@ -274,42 +172,33 @@ output/<project-name>/
 ├── asset-manifest.md
 ├── edit-guide.md
 ├── assets/
-│   ├── jimeng/
-│   ├── html/
-│   ├── recordings/
-│   ├── covers/
-│   └── original/
-├── subtitles/
-│   └── subtitles.srt
-└── materials/
-    ├── MP4/
-    ├── MP3/
-    ├── video_output/
-    └── output/
+│   ├── original/         # 用户补充材料、架构图、流程图、原始视频
+│   ├── covers/           # 封面图
+│   ├── jimeng/           # 即梦原始视频
+│   ├── html/             # HTML 图解
+│   └── recordings/       # HTML 录屏
+├── materials/
+│   ├── MP4/              # S00.mp4...SNN.mp4
+│   ├── MP3/              # audio0.mp3...audioN.mp3 + bgm.mp3
+│   ├── video_output/     # 变速后的 S00.mp4...SNN.mp4
+│   └── output/           # final_voice/final_video/narration/final_video_subtitled
+└── subtitles/subtitles.srt
 ```
 
-可使用：
+使用 `python scripts/scaffold_project.py output/<project-name>` 初始化。
 
-```bash
-bash .claude/skills/jimeng-video-generation/scripts/scaffold.sh output/<project-name>
-```
+## 最终自检
 
-初始化目录和模板。
-
----
-
-## 全局自检
-
-交付任何阶段产物前，检查：
-
-- 是否正确路由到用户实际需要的模块，而不是默认跑完整流程？
-- 是否在该停下的 Checkpoint 停下了？
-- 规划阶段是否没有生成最终 SRT？
-- 技术观点是否尽量来自原文，且表达准确克制？
-- 是否明确区分素材类型？
-- AI 视频 Prompt 是否包含镜头时长、时间轴、运动、结尾状态、风格、禁止内容？
-- 原图处理方式是否经过用户确认？
-- HTML 图解是否保留原图结构和文字信息，并已人工验证通过后才录屏？
-- 封面是否先生成 16:9 主图并人工检查通过，再生成视频号尺寸？是否突出当前文章产品 / 技术名称？
-- 字幕是否在用户提供最终音频或最终视频后生成 / 校准？
-- `asset-manifest.md` 和 `edit-guide.md` 是否能支持剪辑人员接手？
+- 环境检查是否通过？
+- 用户是否确认了 `narration.md` 和 `shot-list.md`？
+- `S00` 是否为封面循环帧并对应 `audio0`？
+- 最后一个镜头是否为用户提供的 outro？
+- 是否没有后期图文包装？
+- 主体是否优先使用 6–8 秒即梦视频？HTML 是否只在两个前置条件同时满足时使用且不超过 3 个？
+- HTML 是否预留底部字幕安全区，并使用 `record_html_with_ffmpeg.py` 按动画时长 + 1 秒全屏录制？
+- 视频与音频是否连续、一一对应？`bgm.mp3` 是否存在？
+- 变速后每段视频是否与音频等长？
+- 完整视频是否含旁白与 BGM？
+- Whisper 字幕是否按 narration 校验通过？
+- 最后一段字幕是否为固定 outro 文案？
+- 字幕成片是否可播放且字幕显示正常？
