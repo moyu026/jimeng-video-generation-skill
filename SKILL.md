@@ -8,7 +8,7 @@ description: 使用即梦 / AI 视频工具把技术发布稿、产品文档、M
 按固定检查点执行技术解读视频生产。只执行用户要求的阶段；完整任务按下列顺序执行：
 
 ```text
-环境检查与配置 → 规划 → 用户检查 narration + shot-list → 用户生成分段 MP3
+环境检查与配置 → 确认横屏 / 竖屏 → 规划 → 用户检查 narration + shot-list → 用户生成分段 MP3
 → 生成 S00 封面视频和 S01... 主体视频，接入最后一段 outro
 → 素材完整性检查 → 按音频变速 → 合成旁白、画面和 BGM
 → Whisper 字幕 + narration 校验 → 烧录字幕 → 交付
@@ -27,6 +27,7 @@ description: 使用即梦 / AI 视频工具把技术发布稿、产品文档、M
 - 主体视频优先使用 `jimeng-video`；每个即梦原始视频生成 6–8 秒。
 - 只有用户提供架构图 / 流程图，且该结构无法用即梦清楚表达时，才使用 `html-recording`；整条视频最多 3 个 HTML 录屏。
 - 最终每段时长由对应 `audioN` 决定，允许对视频变速；整条视频总时长由全部分段音频的总时长决定。
+- 画面方向只有两种：横屏 `16:9`（`1920×1080`）或竖屏 `6:7`（`1080×1260`）；规划前必须确认，后续所有素材和成片保持一致。
 - 固定 outro 文案：
 
 ```text
@@ -58,12 +59,19 @@ python scripts/check_environment.py
 
 环境不满足且无法配置时停止，明确列出缺失项，不假装继续生产。
 
+## 阶段 0.5：确认画面方向
+
+在生成规划前询问用户：选择横屏 16:9（1920×1080）还是竖屏 6:7（1080×1260）？用户未明确前停止，不自行沿用横屏默认值。若用户已在当前请求中明确说明，则直接记录为已确认。
+
+把选择写入 video-plan.md 和 shot-list.md，并用于封面 Prompt、即梦 Prompt、HTML `.stage`、录屏命令和最终输出分辨率。
+
 ## 阶段 1：生成规划文件
 
 读取 `references/PLANNING.md`，根据用户材料生成 `video-plan.md`、`narration.md`、`shot-list.md`。
 
 必须满足：
 
+- `video-plan.md` 和 `shot-list.md` 记录已确认的画面方向、比例和分辨率。
 - `shot-list.md` 包含封面图 Prompt。
 - `S00` 是封面段，画面为封面图循环帧。
 - `narration.md` 包含 `S00` 的封面配音。
@@ -89,16 +97,16 @@ python scripts/check_narration_consistency.py --narration narration.md --shot-li
 
 ## 阶段 3：生成和接入视频
 
-- 使用 `shot-list.md` 中的封面 Prompt 生成封面图。
+- 使用 `shot-list.md` 中的封面 Prompt，按已确认的画面方向生成 `assets/covers/cover.png`。
 - 用封面图和 `audio0.mp3` 创建重复帧视频：
 
 ```bash
-python scripts/create_cover_video.py --image assets/covers/cover-16x9.png --audio materials/MP3/audio0.mp3 --output materials/MP4/S00.mp4
+python scripts/create_cover_video.py --image assets/covers/cover.png --audio materials/MP3/audio0.mp3 --output materials/MP4/S00.mp4 --orientation <landscape|portrait>
 ```
 
 - 按 `shot-list.md` 为 `S01` 到倒数第二个 Shot 生成视频，保存为 `materials/MP4/S01.mp4`……；主体默认使用即梦，每个即梦视频生成 6–8 秒。
 - HTML 录屏必须同时满足“用户提供架构图 / 流程图”和“即梦无法清楚表达结构”，总数不得超过 3 个；提醒用户将原图放入 `assets/original/`。
-- HTML 动画镜头必须预留底部 18% 字幕安全区，并用 `data-animation-duration` 声明动画时长。人工验证通过后，统一调用 `E:\pythonwork\0.study\jimeng-video-generation-skill\scripts\record_html_with_ffmpeg.py` 全屏录制；实际录屏时长固定为动画时长 + 1 秒。
+- HTML 动画镜头必须使用已确认的画面方向，预留底部 18% 字幕安全区，并用 `data-animation-duration` 声明动画时长。人工验证通过后，统一调用 `E:\pythonwork\0.study\jimeng-video-generation-skill\scripts\record_html_with_ffmpeg.py`，传入对应 `--orientation`；实际录屏时长固定为动画时长 + 1 秒。
 - 不添加后期图文包装。
 - 请用户提供最后一个 outro 视频，保存为 `materials/MP4/SNN.mp4`。最终使用对应 `audioN.mp3`，不使用 outro 自带音轨。
 - 每个原视频生成或收到后，立即更新 `asset-manifest.md` 中的 Raw Video、Source 和状态。
@@ -190,6 +198,7 @@ output/<project-name>/
 ## 最终自检
 
 - 环境检查是否通过？
+- 画面方向是否已由用户确认，并在规划、素材和成片中保持一致？
 - 用户是否确认了 `narration.md` 和 `shot-list.md`？
 - `S00` 是否为封面循环帧并对应 `audio0`？
 - 最后一个镜头是否为用户提供的 outro？

@@ -10,6 +10,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;font-f
 body{display:grid;place-items:center;cursor:default}
 body.recording{cursor:none}
 .stage{--subtitle-safe-height:18%;position:relative;width:min(100vw,calc(100vh * 16 / 9));aspect-ratio:16/9;background:#f7f9fc;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.35)}
+body.portrait .stage{width:min(100vw,calc(100vh * 6 / 7));aspect-ratio:6/7}
 .title{position:absolute;left:4%;right:4%;top:4%;margin:0;color:#1e49b7;font-size:clamp(24px,2.2vw,42px);font-weight:560;opacity:0;transform:translateY(-10px);animation:in .7s ease forwards}
 .diagram{position:absolute;left:6%;right:6%;top:16%;bottom:calc(var(--subtitle-safe-height) + 2%);border:3px dashed #17365f;border-radius:28px;background:rgba(255,255,255,.65);opacity:0;transform:translateY(18px);animation:in .7s .25s ease forwards}
 .subtitle-safe-zone{position:absolute;left:0;right:0;bottom:0;height:var(--subtitle-safe-height);z-index:10;pointer-events:none}
@@ -34,6 +35,7 @@ body.recording .replay-zone{display:none}
 function replay(){const oldStage=document.getElementById('stage');const newStage=oldStage.cloneNode(true);oldStage.parentNode.replaceChild(newStage,oldStage)}
 const params=new URLSearchParams(window.location.search);
 if(params.get('record')==='1'){document.body.classList.add('recording')}
+if(params.get('orientation')==='portrait'){document.body.classList.add('portrait')}
 window.addEventListener('keydown',e=>{if(e.key&&e.key.toLowerCase()==='r')replay()});
 </script>
 </body>

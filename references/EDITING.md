@@ -7,6 +7,11 @@
 - 原视频位于 `materials/MP4/S00.mp4...SNN.mp4`。
 - 音频位于 `materials/MP3/audio0.mp3...audioN.mp3`，并有 `bgm.mp3`。
 
+## 画面尺寸
+
+- 所有 `S00...SNN` 必须与用户确认的方向一致：横屏 16:9（1920×1080）或竖屏 6:7（1080×1260）。
+- 合成沿用 S00 的尺寸，不在剪辑阶段改变画面方向。
+
 ## 固定流程
 
 ### 1. 按音频变速
@@ -63,6 +68,7 @@ materials/output/narration.mp3
 
 - 变速视频目录包含连续的 `S00...SNN`，且每段与对应 audioN 等长。
 - 最终视频总时长等于 audio0...audioN 的总时长，允许编码造成轻微误差。
+- 最终视频的方向、比例和分辨率与规划一致。
 - `final_voice.mp4` 含完整旁白。
 - `final_video.mp4` 含完整旁白和 BGM。
 - `narration.mp3` 只含按编号拼接的旁白，不含 BGM。

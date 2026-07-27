@@ -16,7 +16,7 @@
 
 ## Export
 
-- Resolution:
+- Orientation / resolution: <landscape 1920×1080 | portrait 1080×1260>
 - FPS: 30
 - Video codec: H.264
 - Audio codec: AAC

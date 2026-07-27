@@ -6,6 +6,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+FORMATS = {
+    "landscape": (1920, 1080),
+    "portrait": (1080, 1260),
+}
+
 
 def run(command: list[str]) -> str:
     result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="ignore")
@@ -25,6 +30,7 @@ def main() -> int:
     parser.add_argument("--audio", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--fps", type=int, default=30)
+    parser.add_argument("--orientation", choices=FORMATS, default="landscape")
     args = parser.parse_args()
 
     image, audio, output = Path(args.image), Path(args.audio), Path(args.output)
@@ -38,9 +44,10 @@ def main() -> int:
         print(f"ERROR: cannot read audio duration: {exc}", file=sys.stderr)
         return 2
     output.parent.mkdir(parents=True, exist_ok=True)
+    width, height = FORMATS[args.orientation]
     command = [
         "ffmpeg", "-y", "-loop", "1", "-i", str(image), "-t", f"{target_duration:.3f}",
-        "-vf", f"fps={args.fps},scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,format=yuv420p",
+        "-vf", f"fps={args.fps},scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,format=yuv420p",
         "-an", "-c:v", "libx264", "-movflags", "+faststart", str(output),
     ]
     try:

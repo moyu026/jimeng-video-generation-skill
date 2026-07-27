@@ -16,12 +16,15 @@ from urllib.parse import urljoin
 from urllib.request import pathname2url
 
 DEFAULT_CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-WIDTH, HEIGHT = 1920, 1080
+FORMATS = {
+    "landscape": (0, 0, 1920, 1080, 1920, 1080),
+    "portrait": (497, 0, 926, 1080, 1080, 1260),
+}
 ANIMATION_DURATION_RE = re.compile(r"data-animation-duration\s*=\s*['\"]([0-9]+(?:\.[0-9]+)?)['\"]", re.I)
 
 
-def file_url(path: Path) -> str:
-    return urljoin("file:", pathname2url(str(path.resolve()))) + "?record=1"
+def file_url(path: Path, orientation: str) -> str:
+    return urljoin("file:", pathname2url(str(path.resolve()))) + f"?record=1&orientation={orientation}"
 
 
 def animation_duration_from_html(path: Path) -> float | None:
@@ -69,11 +72,14 @@ def send_r_to_chrome() -> None:
     subprocess.run(["powershell.exe", "-NoProfile", "-Command", script], capture_output=True, text=True)
 
 
-def record_blocking(ffmpeg: str, output: Path, record_duration: float, fps: int, encoder: str) -> int:
+def record_blocking(ffmpeg: str, output: Path, record_duration: float, fps: int, encoder: str, orientation: str) -> int:
+    offset_x, offset_y, capture_width, capture_height, output_width, output_height = FORMATS[orientation]
     command = [
         ffmpeg, "-y", "-f", "gdigrab", "-framerate", str(fps),
-        "-offset_x", "0", "-offset_y", "0", "-video_size", f"{WIDTH}x{HEIGHT}",
+        "-offset_x", str(offset_x), "-offset_y", str(offset_y),
+        "-video_size", f"{capture_width}x{capture_height}",
         "-i", "desktop", "-t", str(record_duration), "-an",
+        "-vf", f"scale={output_width}:{output_height},setsar=1",
         "-c:v", encoder, "-pix_fmt", "yuv420p",
     ]
     command += ["-preset", "veryfast", "-global_quality", "18"] if encoder == "h264_qsv" else ["-b:v", "8M"]
@@ -94,6 +100,7 @@ def main() -> int:
     parser.add_argument("-o", "--output")
     parser.add_argument("-d", "--duration", type=float, help="Animation duration in seconds; recording automatically adds 1 second.")
     parser.add_argument("--fps", type=int, default=30)
+    parser.add_argument("--orientation", choices=FORMATS, default="landscape")
     parser.add_argument("--encoder", default="h264_qsv", choices=["h264_qsv", "h264_mf"])
     parser.add_argument("--chrome", default=DEFAULT_CHROME)
     parser.add_argument("--no-browser", action="store_true")
@@ -127,16 +134,16 @@ def main() -> int:
     try:
         if not args.no_browser:
             profile = str(html.parents[1] / "_chrome_profile")
-            url = file_url(html)
+            url = file_url(html, args.orientation)
             print(f"opening fullscreen: {url}")
             browser = launch_chrome(args.chrome, url, profile)
             time.sleep(2.0)
         if args.hold:
             time.sleep(args.hold)
-        result = record_blocking("ffmpeg", output, record_duration, args.fps, args.encoder)
+        result = record_blocking("ffmpeg", output, record_duration, args.fps, args.encoder, args.orientation)
         if result and args.encoder == "h264_qsv":
             print("qsv failed, retrying with h264_mf...")
-            result = record_blocking("ffmpeg", output, record_duration, args.fps, "h264_mf")
+            result = record_blocking("ffmpeg", output, record_duration, args.fps, "h264_mf", args.orientation)
     finally:
         if browser:
             browser.terminate()

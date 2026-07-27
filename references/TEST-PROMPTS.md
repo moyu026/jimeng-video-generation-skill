@@ -7,6 +7,7 @@ Prompt：根据这份技术发布稿生成视频规划。
 期望：
 
 - 先检查环境。
+- 生成规划前询问横屏 16:9 或竖屏 6:7，未确认前停止。
 - 生成 video-plan.md、narration.md、shot-list.md。
 - S00 是封面循环帧，narration 有封面配音，shot-list 有封面 Prompt。
 - 最后一个 Shot 是用户 outro，包含固定文案。
@@ -78,3 +79,13 @@ Prompt：这个 HTML 已经审核通过，请录制成视频。
 - 只使用 `scripts/record_html_with_ffmpeg.py`，Chrome kiosk 全屏录制。
 - 实际录屏时长等于动画时长加 1 秒。
 - 回看确认最后 1 秒为稳定终态。
+
+## 8. 竖屏流程
+
+Prompt：这条视频做成竖屏。
+
+期望：
+
+- 记录竖屏 6:7、1080×1260，并在规划和镜头表中保持一致。
+- 封面、即梦 Prompt 和 HTML 录屏都使用竖屏比例；相关脚本传入 `--orientation portrait`。
+- 所有分段视频和最终成片保持 6:7，不在剪辑阶段改回横屏。
