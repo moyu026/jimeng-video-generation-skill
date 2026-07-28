@@ -37,7 +37,7 @@ Shot ID 从 `S00` 连续递增，不跳号。每个 Shot 必须对应 `audioN.mp
 3. 先写唯一配音总稿，再按 Shot ID 原样切分到 `narration.md` 的分镜映射。
 4. 为 `S00` 编写封面配音；把固定 outro 文案作为最后一段配音。
 5. 生成 `shot-list.md`，将同一份分镜配音逐字同步进去。
-6. 在 `shot-list.md` 中写完整封面图 Prompt，并明确封面图将生成 `S00.mp4` 循环帧。
+6. 在 `shot-list.md` 中写完整封面图 Prompt，指定使用即梦 CLI 图片生成，并明确封面图将生成 `S00.mp4` 循环帧。
 7. 主体镜头优先规划为 `jimeng-video`；每个即梦原始视频生成 6–8 秒，并写逐 1–2 秒时间轴 Prompt。
 8. 只有用户提供架构图 / 流程图，且该结构无法用即梦清楚表达时，才规划 `html-recording`；整条视频最多 3 个 HTML 录屏。
 9. 将最后一个镜头标记为 `user-provided-outro`，不为它调用即梦生成。
@@ -68,6 +68,7 @@ AI 视频 Prompt 必须写明已确认的横屏 `16:9` 或竖屏 `6:7`，原始�
 ```text
 封面目标：
 当前产品 / 技术名称：
+生成工具：jimeng CLI（图片生成）
 画面方向与比例：<横屏 16:9（1920×1080）/ 竖屏 6:7（1080×1260）>
 主体构图：
 技术隐喻：
@@ -100,7 +101,7 @@ python scripts/check_narration_consistency.py --narration narration.md --shot-li
 - `S00`、主体镜头、最后的用户 outro 都存在且编号连续。
 - 主体镜头以 6–8 秒 `jimeng-video` 为主；HTML 录屏仅在两个前置条件同时满足时使用且不超过 3 个。
 - 每段最终时长以 audioN 为准，视频总时长以全部分段音频之和为准。
-- `shot-list.md` 包含封面 Prompt 和每段视频 / 音频文件名。
+- `shot-list.md` 包含指定即梦 CLI 图片生成的封面 Prompt，以及每段视频 / 音频文件名。
 - `narration.md` 包含封面配音和固定 outro 文案。
 - 没有后期图文包装。
 - 配音一致性检查通过。

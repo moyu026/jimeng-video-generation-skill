@@ -1,6 +1,6 @@
 ---
 name: jimeng-video-generation
-description: 使用即梦 / AI 视频工具把技术发布稿、产品文档、Markdown、截图、架构图和录屏素材制作成完整技术解读视频。用于需要环境检查与配置、生成 video-plan.md / narration.md / shot-list.md、制作封面静帧 S00、按 S00/S01 与 audio0/audio1 一一生成和变速镜头、接入用户提供的 outro、混入 bgm.mp3、用 Whisper 生成并按 narration 校验字幕、烧录字幕和交付成片的请求。也可用于单独执行上述规划、视频生成、音画对齐、字幕或合成阶段。
+description: 使用即梦 CLI / AI 视频工具把技术发布稿、产品文档、Markdown、截图、架构图和录屏素材制作成完整技术解读视频。用于需要环境检查与配置、生成 video-plan.md / narration.md / shot-list.md、使用即梦 CLI 生成封面静帧 S00、按 S00/S01 与 audio0/audio1 一一生成和变速镜头、接入用户提供的 outro、混入 bgm.mp3、用 Whisper 生成并按 narration 校验字幕、烧录字幕和交付成片的请求。也可用于单独执行上述规划、视频生成、音画对齐、字幕或合成阶段。
 ---
 
 # Jimeng Video Generation
@@ -24,6 +24,7 @@ description: 使用即梦 / AI 视频工具把技术发布稿、产品文档、M
 - `materials/MP3/bgm.mp3` 是背景音乐，不参与镜头编号。
 - 视频和配音编号必须从 0 连续到 N，且一一对应。
 - 不制作后期图文包装。画面文字只允许最终字幕；不要规划大字标题、箭头、框选、Logo 或 UI 标签叠加。
+- 封面图必须使用即梦 CLI 的图片生成功能生成，不静默改用其他图片生成工具。
 - 主体视频优先使用 `jimeng-video`；每个即梦原始视频生成 6–8 秒。
 - 只有用户提供架构图 / 流程图，且该结构无法用即梦清楚表达时，才使用 `html-recording`；整条视频最多 3 个 HTML 录屏。
 - 最终每段时长由对应 `audioN` 决定，允许对视频变速；整条视频总时长由全部分段音频的总时长决定。
@@ -97,7 +98,9 @@ python scripts/check_narration_consistency.py --narration narration.md --shot-li
 
 ## 阶段 3：生成和接入视频
 
-- 使用 `shot-list.md` 中的封面 Prompt，按已确认的画面方向生成 `assets/covers/cover.png`。
+- 运行 `python scripts/check_environment.py --require-jimeng`，确认即梦 CLI 已安装并认证。
+- 使用即梦 CLI 的图片生成功能读取 `shot-list.md` 中的封面 Prompt，按已确认的画面方向生成 `assets/covers/cover.png`。当前 CLI 的子命令或参数不明确时先查看其帮助或实际文档，不编造命令。
+- 请用户检查封面图；需要修改时调整封面 Prompt 并重新调用即梦 CLI，确认通过后再生成 S00。
 - 用封面图和 `audio0.mp3` 创建重复帧视频：
 
 ```bash
@@ -200,6 +203,7 @@ output/<project-name>/
 - 环境检查是否通过？
 - 画面方向是否已由用户确认，并在规划、素材和成片中保持一致？
 - 用户是否确认了 `narration.md` 和 `shot-list.md`？
+- 封面图是否由即梦 CLI 的图片生成功能生成并经用户确认？
 - `S00` 是否为封面循环帧并对应 `audio0`？
 - 最后一个镜头是否为用户提供的 outro？
 - 是否没有后期图文包装？

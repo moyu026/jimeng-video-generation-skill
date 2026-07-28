@@ -2,7 +2,7 @@
   "name": "jimeng-video-generation",
   "version": "3.0.0",
   "category": "AI Video / Jimeng / Technical Explainer",
-  "description": "Environment-checked Jimeng video workflow with planning, S00 cover segment, SNN/audioN pairing, user-provided outro, duration matching, BGM mixing, Whisper transcription, narration validation, and subtitle burn-in.",
+  "description": "Environment-checked Jimeng workflow with CLI-generated cover art, video planning, S00 cover segment, SNN/audioN pairing, user-provided outro, duration matching, BGM mixing, Whisper transcription, narration validation, and subtitle burn-in.",
   "homepage": "",
   "compat": ["codex", "claude-code", "claude-ai"],
   "entrypoint": "SKILL.md",

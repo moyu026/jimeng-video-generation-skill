@@ -23,7 +23,7 @@
 │  ├─ ENVIRONMENT.md                     # 环境检查和安装要求
 │  ├─ PLANNING.md                        # 规划文件、镜头和配音规则
 │  ├─ COVER.md                           # 封面图和 S00 封面视频规则
-│  ├─ JIMENG-CLI.md                      # 即梦视频生成要求
+│  ├─ JIMENG-CLI.md                      # 即梦图片和视频生成要求
 │  ├─ HTML-DIAGRAM.md                    # 架构图、流程图的 HTML 动画规范
 │  ├─ HTML-RECORDING.md                  # HTML 全屏录屏规范
 │  ├─ EDITING.md                         # 视频变速、拼接和 BGM 合成流程
