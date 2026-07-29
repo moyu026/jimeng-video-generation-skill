@@ -1,8 +1,8 @@
 {
   "name": "jimeng-video-generation",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "category": "AI Video / Jimeng / Technical Explainer",
-  "description": "Environment-checked Jimeng workflow with CLI-generated cover art, video planning, S00 cover segment, SNN/audioN pairing, user-provided outro, duration matching, BGM mixing, Whisper transcription, narration validation, and subtitle burn-in.",
+  "description": "Environment-checked Jimeng workflow using the dreamina CLI (720p, seedance2.0 vip) with user-confirmed image/video generation, CLI-generated cover art, video planning, S00 cover segment, SNN/audioN pairing, user-provided outro, duration matching, BGM mixing, Whisper transcription, narration validation, and subtitle burn-in.",
   "homepage": "",
   "compat": ["codex", "claude-code", "claude-ai"],
   "entrypoint": "SKILL.md",

@@ -18,8 +18,8 @@
 
 ## 素材策略
 
-- S00：`assets/covers/cover.png` 生成循环帧视频。
-- 主体：优先使用即梦视频，每个即梦原始视频生成 6–8 秒。
+- S00：`dreamina` 生成无字背景 `assets/covers/cover-bg-16x9.png`，`create_cover_with_text.py` 叠加文字生成 `assets/covers/cover-16x9.png`，再生成循环帧视频。
+- 主体：优先使用即梦视频，每个即梦原始视频生成 6–8 秒，分辨率 `720p`，模型 `seedance2.0 vip`。
 - HTML：仅当用户提供架构图 / 流程图，且即梦无法清楚表达该结构时使用；整条视频最多 3 个 HTML 录屏。
 - Outro：用户提供。
 - 音频：audio0...audioN，与 Shot 一一对应；每段最终时长由对应音频决定，可对视频变速；另有 bgm.mp3。

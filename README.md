@@ -24,6 +24,7 @@
 │  ├─ PLANNING.md                        # 规划文件、镜头和配音规则
 │  ├─ COVER.md                           # 封面图和 S00 封面视频规则
 │  ├─ JIMENG-CLI.md                      # 即梦图片和视频生成要求
+│  ├─ SOURCE-VIDEO.md                    # 横屏素材视频嵌入品牌背景的规则
 │  ├─ HTML-DIAGRAM.md                    # 架构图、流程图的 HTML 动画规范
 │  ├─ HTML-RECORDING.md                  # HTML 全屏录屏规范
 │  ├─ EDITING.md                         # 视频变速、拼接和 BGM 合成流程
@@ -36,6 +37,7 @@
 │  ├─ check_narration_consistency.py     # 检查配音稿与镜头表是否一致
 │  ├─ create_cover_video.py              # 按 audio0 时长生成 S00 封面视频
 │  ├─ create_cover_with_text.py           # 生成带文字的横竖屏封面图
+│  ├─ create_branded_video.py             # 把横屏素材嵌入品牌背景图并叠加文字/Logo
 │  ├─ record_html_with_ffmpeg.py          # 全屏打开并录制 HTML 动画
 │  ├─ check_media_inventory.py            # 检查 SNN、audioN、BGM 和 outro
 │  ├─ match_video_speed_to_audio.py       # 按对应音频时长变速视频

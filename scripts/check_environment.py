@@ -20,7 +20,7 @@ def browser_available() -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Check the Jimeng video workflow environment.")
-    parser.add_argument("--require-jimeng", action="store_true", help="Require a jimeng CLI command.")
+    parser.add_argument("--require-jimeng", action="store_true", help="Require the dreamina (Jimeng) CLI command.")
     parser.add_argument("--require-browser", action="store_true", help="Require Chrome or Edge for HTML recording.")
     args = parser.parse_args()
 
@@ -32,7 +32,7 @@ def main() -> int:
         ("Pillow", importlib.util.find_spec("PIL") is not None, "run: python -m pip install -r requirements.txt"),
     ]
     if args.require_jimeng:
-        checks.append(("jimeng CLI", shutil.which("jimeng") is not None, "install/configure the actual Jimeng CLI and authentication"))
+        checks.append(("dreamina CLI (Jimeng)", shutil.which("dreamina") is not None, "install/configure the dreamina CLI (Jimeng) and authentication; command name is `dreamina`"))
     if args.require_browser:
         checks.append(("Chrome/Edge", browser_available(), "install Chrome or Edge, or pass an explicit browser path"))
 

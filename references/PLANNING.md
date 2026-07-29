@@ -37,8 +37,8 @@ Shot ID 从 `S00` 连续递增，不跳号。每个 Shot 必须对应 `audioN.mp
 3. 先写唯一配音总稿，再按 Shot ID 原样切分到 `narration.md` 的分镜映射。
 4. 为 `S00` 编写封面配音；把固定 outro 文案作为最后一段配音。
 5. 生成 `shot-list.md`，将同一份分镜配音逐字同步进去。
-6. 在 `shot-list.md` 中写完整封面图 Prompt，指定使用即梦 CLI 图片生成，并明确封面图将生成 `S00.mp4` 循环帧。
-7. 主体镜头优先规划为 `jimeng-video`；每个即梦原始视频生成 6–8 秒，并写逐 1–2 秒时间轴 Prompt。
+6. 在 `shot-list.md` 中写完整封面图 Prompt，指定使用 `dreamina` 图片生成，并明确封面图将生成 `S00.mp4` 循环帧。
+7. 主体镜头优先规划为 `jimeng-video`；每个即梦原始视频生成 6–8 秒，分辨率 `720p`，模型 `seedance2.0 vip`，并写逐 1–2 秒时间轴 Prompt。
 8. 只有用户提供架构图 / 流程图，且该结构无法用即梦清楚表达时，才规划 `html-recording`；整条视频最多 3 个 HTML 录屏。
 9. 将最后一个镜头标记为 `user-provided-outro`，不为它调用即梦生成。
 10. 不规划后期图文包装；删除大字标题、箭头、框选、Logo、UI 标签或画面文字叠加建议。
@@ -54,8 +54,8 @@ Shot ID 从 `S00` 连续递增，不跳号。每个 Shot 必须对应 `audioN.mp
 素材类型只使用：
 
 - `cover-still`：仅限 `S00`。
-- `jimeng-video`：主体默认素材；每个原始视频生成 6–8 秒，最终按 audioN 变速。
-- `source-video`：复用用户原始视频或录屏。
+- `jimeng-video`：主体默认素材；每个原始视频生成 6–8 秒，分辨率 `720p`，模型 `seedance2.0 vip`，最终按 audioN 变速。
+- `source-video`：复用用户原始视频或录屏。若原始素材是横屏而已确认画面方向是竖屏，先用 `dreamina` 生成无字背景图，再用 `scripts/create_branded_video.py` 把横屏素材嵌入背景图并叠加基于该镜头配音稿生成的文字 / Logo，输出与已确认画面方向一致的视频；详见 `references/SOURCE-VIDEO.md`。素材方向已与画面方向一致时直接复制。
 - `html-recording`：仅当用户提供架构图 / 流程图且即梦无法清楚表达时使用，整条视频最多 3 个；必须写明动画时长 A、录屏时长 A+1 秒、底部 18% 字幕安全区和 `record_html_with_ffmpeg.py` 输出路径。
 - `user-provided-outro`：仅限最后一个 Shot。
 
@@ -68,15 +68,16 @@ AI 视频 Prompt 必须写明已确认的横屏 `16:9` 或竖屏 `6:7`，原始�
 ```text
 封面目标：
 当前产品 / 技术名称：
-生成工具：jimeng CLI（图片生成）
+生成工具：dreamina CLI（图片生成，只生成无字主视觉背景）
 画面方向与比例：<横屏 16:9（1920×1080）/ 竖屏 6:7（1080×1260）>
 主体构图：
 技术隐喻：
 视觉风格：
 色彩与光效：
-禁止内容：禁止错误文字、第三方 Logo、水印和真实人物。
-输出路径：assets/covers/cover.png
-视频化：根据 audio0.mp3 时长循环该图片，输出 materials/MP4/S00.mp4
+禁止内容：禁止生成任何可读文字、标题、产品名、Logo、品牌标识、第三方 Logo、水印和真实人物。
+输出路径：assets/covers/cover-bg-16x9.png
+后期嵌字：使用 scripts/create_cover_with_text.py 叠加标题、产品 / 技术名称、Logo 和标签，输出 assets/covers/cover-16x9.png
+视频化：根据 audio0.mp3 时长循环 assets/covers/cover-16x9.png，输出 materials/MP4/S00.mp4
 ```
 
 封面是视频第 0 段，不再视为时间线外资产。
@@ -101,7 +102,7 @@ python scripts/check_narration_consistency.py --narration narration.md --shot-li
 - `S00`、主体镜头、最后的用户 outro 都存在且编号连续。
 - 主体镜头以 6–8 秒 `jimeng-video` 为主；HTML 录屏仅在两个前置条件同时满足时使用且不超过 3 个。
 - 每段最终时长以 audioN 为准，视频总时长以全部分段音频之和为准。
-- `shot-list.md` 包含指定即梦 CLI 图片生成的封面 Prompt，以及每段视频 / 音频文件名。
+- `shot-list.md` 包含指定 `dreamina` 图片生成的封面 Prompt，以及每段视频 / 音频文件名。
 - `narration.md` 包含封面配音和固定 outro 文案。
 - 没有后期图文包装。
 - 配音一致性检查通过。
